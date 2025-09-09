@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { 
   Home01, 
   Calendar, 
@@ -18,6 +19,8 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const pathname = usePathname();
+  
   const navigationItems: NavItemType[] = [
     {
       label: "Inicio",
@@ -62,6 +65,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-secondary">
       <SidebarNavigationSimple
+        activeUrl={pathname}
         items={navigationItems}
         footerItems={footerItems}
         showAccountCard={true}
