@@ -81,7 +81,7 @@ export default function InicioPage() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-primary">10:00 AM</p>
-                <p className="text-xs text-tertiary">Hoy</p>
+                <p className="text-xs text-tertiary">Hoys</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
