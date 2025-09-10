@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Función helper para verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Función helper para verificar si es el propietario
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Función helper para verificar tipos de archivo de imagen
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Función helper para verificar el tamaño del archivo (5MB max)
+    function isValidSize() {
+      return request.resource.size <= 5 * 1024 * 1024;
+    }
+
+    // Archivos de usuario (fotos de perfil, portadas, etc.)
+    match /usuarios/{userId}/{allPaths=**} {
+      // Solo el propietario puede leer y escribir sus archivos
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      
+      // Validaciones para subida de archivos
+      allow create: if isAuthenticated() && 
+                       isOwner(userId) && 
+                       isImage() && 
+                       isValidSize();
+      
+      allow update: if isAuthenticated() && 
+                       isOwner(userId) && 
+                       isImage() && 
+                       isValidSize();
+    }
+    
+    // Archivos públicos (pueden ser leídos por cualquiera pero solo escritos por usuarios autenticados)
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImage() && isValidSize();
+    }
+    
+    // Archivos temporales (se pueden subir pero se borran automáticamente)
+    match /temp/{allPaths=**} {
+      allow read, write: if isAuthenticated() && isImage() && isValidSize();
+    }
+    
+    // Denegar todo lo demás
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

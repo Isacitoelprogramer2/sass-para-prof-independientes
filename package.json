@@ -5,7 +5,17 @@
     "scripts": {
         "dev": "next dev --turbopack",
         "build": "next build",
-        "start": "next start"
+        "export": "next export",
+        "build:export": "npm run build && npm run export",
+        "start": "next start",
+        "firebase:deploy": "firebase deploy",
+        "firebase:deploy:hosting": "firebase deploy --only hosting",
+        "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage",
+        "firebase:deploy:default": "firebase deploy --only firestore:rules --database (default)",
+        "firebase:deploy:production": "firebase deploy --only firestore:rules --database production",
+        "firebase:emulators": "firebase emulators:start",
+        "deploy": "npm run build:export && firebase deploy",
+        "deploy:hosting": "npm run build:export && firebase deploy --only hosting"
     },
     "dependencies": {
         "@tailwindcss/postcss": "^4.1.11",

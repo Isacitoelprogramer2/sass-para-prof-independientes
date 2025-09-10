@@ -1,0 +1,115 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función helper para verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Función helper para verificar si el usuario es el propietario del documento
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Función helper para verificar datos requeridos del usuario
+    function isValidUserData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['datosProfesional', 'datosNegocio', 'datosCuenta']) &&
+             data.datosProfesional.keys().hasAll(['nombres', 'profesion']) &&
+             data.datosNegocio.keys().hasAll(['descripcion', 'informacionContacto', 'horarioAtencion']) &&
+             data.datosNegocio.informacionContacto.keys().hasAll(['telefono', 'correo']) &&
+             data.datosCuenta.keys().hasAll(['plan']) &&
+             data.datosCuenta.plan in ['BASICO', 'PREMIUM'];
+    }
+    
+    // Función helper para verificar datos válidos de servicio
+    function isValidServiceData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['nombre', 'descripcion', 'precio', 'duracion', 'estado', 'usuarioId']) &&
+             data.estado in ['ACTIVO', 'INACTIVO'] &&
+             data.precio >= 0 &&
+             data.duracion > 0;
+    }
+    
+    // Función helper para verificar datos válidos de cliente
+    function isValidClientData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['nombre', 'contacto', 'usuarioId']) &&
+             data.contacto.keys().hasAny(['telefono', 'correo']);
+    }
+    
+    // Función helper para verificar datos válidos de cita
+    function isValidCitaData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['clienteId', 'servicioId', 'usuarioId', 'fechaHora', 'estado']) &&
+             data.estado in ['PENDIENTE', 'CONFIRMADA', 'COMPLETADA', 'CANCELADA'] &&
+             data.fechaHora is timestamp;
+    }
+
+    // Reglas para usuarios
+    match /usuarios/{userId} {
+      // Permitir lectura y escritura solo al propietario del documento
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      
+      // Validar datos al crear/actualizar
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUserData();
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUserData();
+    }
+    
+    // Reglas para servicios
+    match /servicios/{servicioId} {
+      // Permitir lectura pública de servicios activos
+      allow read: if resource.data.estado == 'ACTIVO';
+      
+      // Permitir lectura y escritura al propietario
+      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      
+      // Validar datos al crear/actualizar
+      allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) && isValidServiceData();
+      allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidServiceData();
+    }
+    
+    // Reglas para clientes
+    match /clientes/{clienteId} {
+      // Solo el propietario puede leer y escribir sus clientes
+      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      
+      // Validar datos al crear/actualizar
+      allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) && isValidClientData();
+      allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidClientData();
+    }
+    
+    // Reglas para citas
+    match /citas/{citaId} {
+      // El propietario puede leer y escribir sus citas
+      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      
+      // El cliente puede leer sus propias citas
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.clienteId;
+      
+      // Validar datos al crear/actualizar
+      allow create: if isAuthenticated() && 
+                       (isOwner(request.resource.data.usuarioId) || request.auth.uid == request.resource.data.clienteId) && 
+                       isValidCitaData();
+      allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidCitaData();
+    }
+    
+    // Reglas para archivos de usuario (fotos de perfil, portadas, etc.)
+    match /usuario-files/{userId}/{allPaths=**} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Reglas para archivos públicos (pueden ser leídos por cualquiera)
+    match /public-files/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    
+    // Denegar todo lo demás
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
