@@ -12,6 +12,7 @@
         "@tailwindcss/typography": "^0.5.16",
         "@untitledui/file-icons": "^0.0.8",
         "@untitledui/icons": "^0.0.19",
+        "firebase": "^12.2.1",
         "lucide-react": "^0.542.0",
         "motion": "^12.23.12",
         "next": "^15.4.6",

@@ -60,8 +60,9 @@ export default function ClientesPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="p-6 lg:p-8 flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-display-xs font-semibold text-primary">Gestión de Clientes</h1>
           <p className="mt-2 text-md text-tertiary">
@@ -74,7 +75,7 @@ export default function ClientesPage() {
       </div>
 
       {/* Búsqueda y filtros */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex-1 max-w-md">
           <Input
             placeholder="Buscar clientes..."
@@ -96,7 +97,7 @@ export default function ClientesPage() {
       </div>
 
       {/* Estadísticas rápidas */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-primary">{clientes.length}</p>
           <p className="text-sm text-tertiary">Total Clientes</p>
@@ -116,6 +117,31 @@ export default function ClientesPage() {
         <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-primary">85%</p>
           <p className="text-sm text-tertiary">Retención</p>
+        </div>
+      </div>
+
+      {/* Acciones rápidas */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="bg-primary border border-secondary rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Clientes Recientes</h3>
+          <div className="space-y-3">
+            {clientes.slice(0, 3).map((cliente) => (
+              <div key={cliente.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50">
+                    <User01 className="h-4 w-4 text-brand-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-primary">{cliente.nombre}</p>
+                    <p className="text-xs text-tertiary">{cliente.ultimaVisita}</p>
+                  </div>
+                </div>
+                <Button color="tertiary" size="sm">
+                  Contactar
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -178,48 +204,7 @@ export default function ClientesPage() {
         </div>
       </div>
 
-      {/* Acciones rápidas */}
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="bg-primary border border-secondary rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-primary mb-4">Clientes Recientes</h3>
-          <div className="space-y-3">
-            {clientes.slice(0, 3).map((cliente) => (
-              <div key={cliente.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50">
-                    <User01 className="h-4 w-4 text-brand-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-primary">{cliente.nombre}</p>
-                    <p className="text-xs text-tertiary">{cliente.ultimaVisita}</p>
-                  </div>
-                </div>
-                <Button color="tertiary" size="sm">
-                  Contactar
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-primary border border-secondary rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-primary mb-4">Acciones Rápidas</h3>
-          <div className="space-y-3">
-            <Button color="tertiary" size="sm" className="w-full justify-start">
-              Enviar recordatorio de cita
-            </Button>
-            <Button color="tertiary" size="sm" className="w-full justify-start">
-              Exportar lista de clientes
-            </Button>
-            <Button color="tertiary" size="sm" className="w-full justify-start">
-              Importar clientes desde CSV
-            </Button>
-            <Button color="tertiary" size="sm" className="w-full justify-start">
-              Configurar automatizaciones
-            </Button>
-          </div>
-        </div>
-      </div>
+      
     </div>
   );
 }

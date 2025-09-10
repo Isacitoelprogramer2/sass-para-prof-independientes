@@ -22,3 +22,21 @@ Próximos pasos: integración con Google Calendar y versión beta para pruebas c
 ---
 
 ✨ Mi meta es crear una plataforma que ayude a los profesionales a enfocarse en su trabajo, mientras la herramienta gestiona la parte operativa.  
+
+
+## Firebase setup
+
+1. Create a Firebase project at https://console.firebase.google.com.
+2. In the project settings, copy the web app config values into a local `.env.local` (use `.env.local.example` as template).
+3. Install dependencies (already includes `firebase` in package.json). If you need to reinstall:
+
+	npm install
+
+4. Use the exported helpers in `src/lib/firebase.ts` to access `firebaseAuth`, `firebaseDb`, and `firebaseStorage`.
+
+Example usage in a component:
+
+```tsx
+import { firebaseAuth } from "@/lib/firebase";
+// use firebaseAuth with onAuthStateChanged, signInWithPopup, etc.
+```

@@ -24,19 +24,19 @@ export default function NavBar_1() {
           ))}
         </ul>
         <div className="flex items-center gap-3">
-          <a
-            href="#demo"
+          <Link
+            href="/auth/login"
             className="hidden lg:inline-flex rounded-full border border-white/15 px-4 py-2 text-sm text-blue-100 hover:bg-white/10"
           >
-            Ver demo
-          </a>
-          <a
-            href="#contacto"
+            Iniciar Sesión
+          </Link>
+          <Link
+            href="/auth/register"
             className="inline-flex rounded-full bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 shadow-lg shadow-blue-600/20"
-            onClick={() => track("click_nav_cta", { to: "contacto" })}
+            onClick={() => track("click_nav_cta", { to: "register" })}
           >
-            Agenda una llamada
-          </a>
+            Registrarse
+          </Link>
         </div>
       </nav>
     </div>

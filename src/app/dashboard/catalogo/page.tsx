@@ -59,6 +59,23 @@ export default function CatalogoPage() {
         </Button>
       </div>
 
+
+      {/* Estadísticas rápidas */}
+      <div className="mt-8 mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-primary">{servicios.length}</p>
+          <p className="text-sm text-tertiary">Servicios Activos</p>
+        </div>
+        <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-primary">$45</p>
+          <p className="text-sm text-tertiary">Precio Promedio</p>
+        </div>
+        <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-primary">3</p>
+          <p className="text-sm text-tertiary">Categorías</p>
+        </div>
+      </div>
+
       {/* Filtros por categoría */}
       <div className="mb-6 flex gap-2 overflow-x-auto">
         {categorias.map((categoria) => (
@@ -121,31 +138,9 @@ export default function CatalogoPage() {
         ))}
       </div>
 
-      {/* Card para agregar nuevo servicio */}
-      <div className="mt-6 bg-primary border-2 border-dashed border-secondary rounded-lg p-8 text-center hover:border-brand-300 transition-colors cursor-pointer">
-        <Plus className="h-12 w-12 text-tertiary mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-primary mb-2">Agregar Nuevo Servicio</h3>
-        <p className="text-tertiary mb-4">Crea un nuevo servicio para tu catálogo</p>
-        <Button>
-          Crear Servicio
-        </Button>
-      </div>
+      
 
-      {/* Estadísticas rápidas */}
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-primary">{servicios.length}</p>
-          <p className="text-sm text-tertiary">Servicios Activos</p>
-        </div>
-        <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-primary">$45</p>
-          <p className="text-sm text-tertiary">Precio Promedio</p>
-        </div>
-        <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-primary">3</p>
-          <p className="text-sm text-tertiary">Categorías</p>
-        </div>
-      </div>
+      
     </div>
   );
 }
