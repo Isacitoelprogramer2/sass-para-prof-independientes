@@ -114,8 +114,10 @@ export function useServicios() {
     try {
       // Preparar datos del servicio
       const nuevoServicio = {
-        ...servicioData,
-        usuarioId: firebaseAuth.currentUser.uid,
+  ...servicioData,
+  usuarioId: firebaseAuth.currentUser.uid,
+  // Estado inicial del servicio: activo
+  activo: true,
       };
 
       // Crear documento en Firestore

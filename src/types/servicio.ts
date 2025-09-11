@@ -8,4 +8,6 @@ export interface Servicio {
   servicio?: string;
   detalles?: string;
   precio: number; // en la moneda definida (ejemplo soles o dólares)
+  // Estado de activo/inactivo para el servicio
+  activo: boolean;
 }

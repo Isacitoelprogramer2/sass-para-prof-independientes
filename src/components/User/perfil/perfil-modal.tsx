@@ -11,11 +11,13 @@ import { Usuario } from '@/types/usuario';
 interface PerfilModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onShowSuccess?: (title?: string, message?: string) => void;
+  onShowError?: (title?: string, message?: string) => void;
 }
 
 type TabType = 'personal' | 'negocio';
 
-export default function PerfilModal({ isOpen, onClose }: PerfilModalProps) {
+export default function PerfilModal({ isOpen, onClose, onShowSuccess, onShowError }: PerfilModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('personal');
   const modalRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -72,18 +74,34 @@ export default function PerfilModal({ isOpen, onClose }: PerfilModalProps) {
     try {
       await guardarUsuario(datos, archivos);
       setHasChanges(false);
-      // Mostrar mensaje de éxito (puedes implementar un toast aquí)
-      alert('Cambios guardados exitosamente');
+      // Mostrar modal de confirmación de éxito
+      if (onShowSuccess) {
+        onShowSuccess(
+          "¡Cambios guardados!",
+          "Tu información se ha actualizado correctamente."
+        );
+      }
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('Error al guardar los cambios. Inténtalo de nuevo.');
+      // Mostrar modal de confirmación de error
+      if (onShowError) {
+        onShowError(
+          "Error al guardar",
+          "No se pudieron guardar los cambios. Por favor, inténtalo de nuevo."
+        );
+      }
     }
   };
 
   const handleGlobalSave = async () => {
     // Esta función se llama desde el botón "Guardar Cambios" del footer
     // Por ahora, solo mostramos un mensaje ya que cada componente maneja su propio guardado
-    alert('Los cambios se guardan automáticamente desde cada sección.');
+    if (onShowSuccess) {
+      onShowSuccess(
+        "Información guardada",
+        "Los cambios se guardan automáticamente desde cada sección."
+      );
+    }
   };
 
   return (

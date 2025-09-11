@@ -8,8 +8,8 @@ import { Input } from "@/components/base/input/input";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { Select } from "@/components/base/select/select";
 import { useServicios } from "@/hooks/use-servicios";
+import { Toggle } from "@/components/base/toggle/toggle";
 import { useUsuario } from "@/hooks/use-usuario";
-import { Servicio } from "@/types/servicio";
 import { SERVICIOS } from "@/types/Categorias/servicios";
 import ImageUploader from "@/components/dashboard/uploaderUX";
 
@@ -52,12 +52,13 @@ export default function ServicioFormPage() {
 
   // Estados del formulario
   const [formData, setFormData] = useState({
-  nombre: '',
-  tipo: '',
-  categoria: '', // subcategoría
-  servicio: '', // servicio específico
-  detalles: '',
-  precio: 0,
+    nombre: '',
+    tipo: '',
+    categoria: '', // subcategoría
+    servicio: '', // servicio específico
+    detalles: '',
+    precio: 0,
+    activo: true, // Por defecto el servicio está activo
   });
 
   // Estados para manejo de imagen
@@ -96,6 +97,7 @@ export default function ServicioFormPage() {
             servicio: servicio.servicio || '',
             detalles: servicio.detalles || '',
             precio: servicio.precio || 0,
+            activo: typeof servicio.activo === 'boolean' ? servicio.activo : true,
           });
           
           if (servicio.imagen) {
@@ -126,7 +128,8 @@ export default function ServicioFormPage() {
   /**
    * Manejar cambios en los campos del formulario
    */
-  const handleInputChange = (field: string, value: string | number) => {
+  // Permite string, number y boolean para los campos del formulario
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -365,7 +368,6 @@ export default function ServicioFormPage() {
       {/* Formulario */}
       <div className="max-w-2xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ...depurador removido... */}
 
           {/* Error general */}
           {errors.submit && (
@@ -393,23 +395,20 @@ export default function ServicioFormPage() {
 
             {/* Tipo de servicio */}
             <div>
-              <label className="block text-sm font-medium text-primary mb-1.5">
-                Tipo de servicio <span className="text-error-500">*</span>
-              </label>
-              <select
-                value={formData.tipo}
-                onChange={(e) => handleInputChange('tipo', e.target.value)}
-                className={`w-full rounded-lg border ${
-                  errors.tipo ? 'border-error-500' : 'border-secondary'
-                } bg-primary px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500`}
-                required
+              <Select
+                label="Tipo de servicio"
+                items={TIPOS_SERVICIO.map(tipo => ({ id: tipo.value, label: tipo.label, value: tipo.value }))}
+                selectedKey={formData.tipo}
+                onSelectionChange={key => handleInputChange('tipo', key ? String(key) : '')}
+                isRequired
+                hint={errors.tipo}
               >
-                {TIPOS_SERVICIO.map((tipo) => (
-                  <option key={tipo.value} value={tipo.value}>
-                    {tipo.label}
-                  </option>
-                ))}
-              </select>
+                {(item) => (
+                  <Select.Item key={item.id} id={item.id} textValue={item.label}>
+                    {item.label}
+                  </Select.Item>
+                )}
+              </Select>
               {errors.tipo && (
                 <p className="mt-1 text-sm text-error-600">{errors.tipo}</p>
               )}
@@ -453,6 +452,18 @@ export default function ServicioFormPage() {
               {errors.precio && (
                 <p className="mt-1 text-sm text-error-600">{errors.precio}</p>
               )}
+            </div>
+            {/* Toggle para activar/desactivar el servicio */}
+            <div className="sm:col-span-2 flex items-center gap-3">
+              <Toggle
+                label="Estado del servicio"
+                isSelected={formData.activo}
+                onChange={selected => handleInputChange('activo', selected)}
+                size="md"
+              />
+              <span className={`text-sm ${formData.activo ? 'text-success-600' : 'text-error-600'}`}>
+                {formData.activo ? 'Activo' : 'Inactivo'}
+              </span>
             </div>
           </div>
 
