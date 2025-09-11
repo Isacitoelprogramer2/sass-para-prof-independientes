@@ -15,6 +15,7 @@ import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { cx } from "@/utils/cx";
 import { useProfileModal } from "@/contexts/profile-modal-context";
+import { useConfiguracionModal } from "@/contexts/configuracion-modal-context";
 
 export const NavAccountMenu = ({
     className,
@@ -23,6 +24,7 @@ export const NavAccountMenu = ({
     const router = useRouter();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const { isProfileModalOpen, openProfileModal, closeProfileModal } = useProfileModal();
+    const { openConfiguracionModal } = useConfiguracionModal();
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -43,7 +45,7 @@ export const NavAccountMenu = ({
     };
 
     const handleAccountSettings = () => {
-        router.push("/dashboard/configuracion/cuenta");
+        openConfiguracionModal();
     };
 
     const onKeyDown = useCallback(

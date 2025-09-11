@@ -4,8 +4,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/base/buttons/button';
 import { Input } from '@/components/base/input/input';
 import { TextArea } from '@/components/base/textarea/textarea';
-import { FileTrigger } from '@/components/base/file-upload-trigger/file-upload-trigger';
+import ImageUploader from '@/components/dashboard/uploaderUX';
 import { Usuario } from '@/types/usuario';
+import { Select } from '@/components/base/select/select';
+import { CATEGORIAS } from '@/types/Categorias/categorias';
+import { SUBCATEGORIAS } from '@/types/Categorias/subcategorias';
 
 interface InfoDelNegocioProps {
   usuario: Usuario | null;
@@ -20,14 +23,18 @@ export default function InfoDelNegocio({
   loading = false,
   saving = false
 }: InfoDelNegocioProps) {
+  // Estado inicial del formulario, ahora incluye 'categoria'
   const [formData, setFormData] = useState({
     nombre: usuario?.datosNegocio.nombre || '',
     descripcion: usuario?.datosNegocio.descripcion || '',
     colorMarca: usuario?.datosNegocio.colorMarca || '#000000',
+    fotoPortada: usuario?.datosNegocio.fotoPortada || '',
     telefono: usuario?.datosNegocio.informacionContacto.telefono || '',
     correo: usuario?.datosNegocio.informacionContacto.correo || '',
     horarioAtencion: usuario?.datosNegocio.horarioAtencion || 'Lun-Vie 9:00-18:00',
     ubicacion: usuario?.datosNegocio.ubicacion || '',
+  categoria: usuario?.datosNegocio.categoria || '',
+  subcategoria: usuario?.datosNegocio.subcategoria || '',
   });
 
   const [fotoPortada, setFotoPortada] = useState<File | null>(null);
@@ -45,12 +52,15 @@ export default function InfoDelNegocio({
 
   const handleSave = () => {
     if (onSave) {
+      // Actualiza la categoría y subcategoría con el valor del formulario
       const datosActualizados: Partial<Usuario> = {
         datosNegocio: {
           ...usuario?.datosNegocio,
           nombre: formData.nombre,
           descripcion: formData.descripcion,
           colorMarca: formData.colorMarca,
+          categoria: formData.categoria,
+          subcategoria: formData.subcategoria,
           informacionContacto: {
             telefono: formData.telefono,
             correo: formData.correo,
@@ -59,7 +69,6 @@ export default function InfoDelNegocio({
           ubicacion: formData.ubicacion,
         },
       };
-      
       const archivos = fotoPortada ? { fotoPortada } : undefined;
       onSave(datosActualizados, archivos);
     }
@@ -128,42 +137,57 @@ export default function InfoDelNegocio({
           />
         </div>
 
+
+
+        {/* Foto de portada */}
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">
+            Categoría *
+          </label>
+          {/* Selector de categoría usando el componente Select de la UI */}
+          <Select
+            items={CATEGORIAS}
+            selectedKey={formData.categoria}
+            onSelectionChange={(key) => handleInputChange('categoria', key ? String(key) : "")}
+            isRequired
+          >
+            {(item) => (
+              <Select.Item key={item.id} id={item.id} textValue={item.label}>
+                {item.label}
+              </Select.Item>
+            )}
+          </Select>
+        </div>
+
+        {/* Selector de subcategoría dependiente de la categoría seleccionada */}
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">
+            Subcategoría
+          </label>
+          <Select
+            items={SUBCATEGORIAS[formData.categoria] || []}
+            selectedKey={formData.subcategoria}
+            onSelectionChange={(key) => handleInputChange('subcategoria', key ? String(key) : "")}
+            isDisabled={!formData.categoria}
+          >
+            {(item) => (
+              <Select.Item key={item.id} id={item.id} textValue={item.label}>
+                {item.label}
+              </Select.Item>
+            )}
+          </Select>
+        </div>
+
+        {/* Foto de portada */}
         <div>
           <label className="block text-sm font-medium text-gray-400 mb-2">
             Foto de Portada
           </label>
-          {usuario?.datosNegocio.fotoPortada && (
-            <div className="mb-4">
-              <img 
-                src={usuario.datosNegocio.fotoPortada} 
-                alt="Foto de portada actual"
-                className="w-full h-32 object-cover rounded-lg"
-              />
-            </div>
-          )}
-          <FileTrigger
-            acceptedFileTypes={['image/*']}
-            onSelect={(files) => {
-              if (files && files.length > 0) {
-                handleFileChange(files[0]);
-              }
-            }}
-          >
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
-              <div className="text-gray-600">
-                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <p className="mt-2 text-sm">Sube una imagen de portada</p>
-                <p className="text-xs text-gray-500">PNG, JPG hasta 5MB</p>
-              </div>
-            </div>
-          </FileTrigger>
-          {fotoPortada && (
-            <p className="mt-2 text-sm text-green-600">
-              Archivo seleccionado: {fotoPortada.name}
-            </p>
-          )}
+          <ImageUploader
+            onImageChange={handleFileChange}
+            imagenExistente={usuario?.datosNegocio.fotoPortada}
+            onRemoveImage={() => setFotoPortada(null)}
+          />
         </div>
       </div>
 

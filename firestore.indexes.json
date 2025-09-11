@@ -19,6 +19,20 @@
       ]
     },
     {
+      "collectionGroup": "servicios",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "usuarioId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nombre",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "clientes",
       "queryScope": "COLLECTION",
       "fields": [

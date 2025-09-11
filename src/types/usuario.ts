@@ -17,8 +17,11 @@ export interface Usuario {
     fotoPortada?: string;
     horarioAtencion: string; // ejemplo: "Lun-Vie 9:00-18:00"
     ubicacion?: string;
+    categoria: string;      // Ejemplo: "Salud"
+    subcategoria: string;   // Ejemplo: "Odontología"
   };
   datosCuenta: {
     plan: "BASICO" | "PREMIUM";
   };
 }
+

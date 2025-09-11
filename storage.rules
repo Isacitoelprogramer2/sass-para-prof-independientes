@@ -14,8 +14,15 @@ service firebase.storage {
     }
     
     // Función helper para verificar tipos de archivo de imagen
+    // Permitir imágenes JPG, PNG, GIF y WebP
     function isImage() {
-      return request.resource.contentType.matches('image/.*');
+      return request.resource.contentType.matches('image/.*') &&
+        (
+          request.resource.contentType.matches('image/jpeg') ||
+          request.resource.contentType.matches('image/png') ||
+          request.resource.contentType.matches('image/gif') ||
+          request.resource.contentType.matches('image/webp')
+        );
     }
     
     // Función helper para verificar el tamaño del archivo (5MB max)
@@ -49,6 +56,21 @@ service firebase.storage {
     // Archivos temporales (se pueden subir pero se borran automáticamente)
     match /temp/{allPaths=**} {
       allow read, write: if isAuthenticated() && isImage() && isValidSize();
+    }
+
+    // Archivos de servicios (imágenes asociadas a servicios)
+    match /servicios/{servicioId}/{userId}/{allPaths=**} {
+      // Solo el propietario puede leer y escribir archivos de su servicio
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      // Validaciones para subida de archivos
+      allow create: if isAuthenticated() &&
+                       isOwner(userId) &&
+                       isImage() &&
+                       isValidSize();
+      allow update: if isAuthenticated() &&
+                       isOwner(userId) &&
+                       isImage() &&
+                       isValidSize();
     }
     
     // Denegar todo lo demás

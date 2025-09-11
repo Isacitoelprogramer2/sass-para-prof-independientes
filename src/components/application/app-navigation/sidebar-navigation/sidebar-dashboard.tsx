@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
+import Image from "next/image";
 import { cx } from "@/utils/cx";
 import { MobileNavigationHeader } from "../base-components/mobile-header";
 import { NavAccountCard } from "../base-components/nav-account-card";
@@ -51,7 +51,10 @@ export const SidebarNavigationSimple = ({
             )}
         >
             <div className="flex flex-col gap-5 px-4 lg:px-5">
-                <UntitledLogo className="h-8" />
+                <div className="flex items-center gap-2 px-1.5">
+                    <Image src="/favicon.png" alt="Zendaly" width={32} height={32} />
+                    <h1 className="text-lg font-bold">Zendaly</h1>
+                </div>
             </div>
 
             <NavList activeUrl={activeUrl} items={items} />

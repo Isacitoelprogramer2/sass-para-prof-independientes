@@ -1,9 +1,15 @@
 export interface Cita {
   id: string;
-  clienteId: string; // referencia a Cliente
-  servicioId: string; // referencia a Servicio
+  codigoAcceso: string; // código único generado automáticamente
+  clienteId?: string;   // si es HABITUAL
+  clienteAmbulatorio?: {
+    nombre: string;
+    telefono?: string;
+  }; // si es AMBULATORIO
+  servicioId: string;
   fechaRegistro: Date;
   fechaReservada: Date;
   notas?: string;
   estado: "CONFIRMADA" | "PENDIENTE" | "CANCELADA";
 }
+

@@ -35,6 +35,8 @@ export function useUsuario() {
             },
             datosNegocio: {
               descripcion: '',
+              categoria: '',
+              subcategoria: '',
               informacionContacto: {
                 telefono: '',
                 correo: firebaseAuth.currentUser.email || '',

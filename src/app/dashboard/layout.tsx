@@ -9,14 +9,15 @@ import {
   Calendar,
   BookOpen01,
   Users01,
-  Settings01,
   LifeBuoy01,
 } from "@untitledui/icons";
 import { SidebarNavigationSimple } from "@/components/application/app-navigation/sidebar-navigation/sidebar-dashboard";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import type { NavItemType } from "@/components/application/app-navigation/config";
 import { ProfileModalProvider } from "@/contexts/profile-modal-context";
+import { ConfiguracionModalProvider } from "@/contexts/configuracion-modal-context";
 import { PerfilModalWrapper } from "@/components/User/perfil/perfil-modal-wrapper";
+import { ConfiguracionModalWrapper } from "@/components/User/configuracion/configuracion-modal-wrapper";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -69,7 +70,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <AuthGuard requireAuth={true}>
       <ProfileModalProvider>
-        <div className="flex h-screen bg-secondary">
+        <ConfiguracionModalProvider>
+          <div className="flex h-screen bg-secondary">
           <SidebarNavigationSimple
             activeUrl={pathname}
             items={navigationItems}
@@ -86,7 +88,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Renderizar el modal de perfil en el layout */}
           {/* El modal se montará aquí pero se renderizará en el body usando portal */}
           <PerfilModalWrapper />
+          <ConfiguracionModalWrapper />
         </div>
+      </ConfiguracionModalProvider>
       </ProfileModalProvider>
     </AuthGuard>
   );

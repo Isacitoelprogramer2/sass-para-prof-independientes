@@ -27,10 +27,11 @@ service cloud.firestore {
     // Función helper para verificar datos válidos de servicio
     function isValidServiceData() {
       let data = request.resource.data;
-      return data.keys().hasAll(['nombre', 'descripcion', 'precio', 'duracion', 'estado', 'usuarioId']) &&
-             data.estado in ['ACTIVO', 'INACTIVO'] &&
+      return data.keys().hasAll(['nombre', 'tipo', 'precio', 'usuarioId']) &&
              data.precio >= 0 &&
-             data.duracion > 0;
+             data.nombre is string &&
+             data.tipo is string &&
+             data.usuarioId is string;
     }
     
     // Función helper para verificar datos válidos de cliente
@@ -60,15 +61,20 @@ service cloud.firestore {
     
     // Reglas para servicios
     match /servicios/{servicioId} {
-      // Permitir lectura pública de servicios activos
-      allow read: if resource.data.estado == 'ACTIVO';
+      // Permitir lectura a todos los usuarios autenticados (para ver catálogos)
+      allow read: if isAuthenticated();
       
-      // Permitir lectura y escritura al propietario
-      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      // Permitir todas las operaciones al propietario del servicio
+      allow read, write, create, update, delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
       
-      // Validar datos al crear/actualizar
+      // Permitir creación si es el propietario y los datos son válidos
       allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) && isValidServiceData();
+      
+      // Permitir actualización si es el propietario y los datos son válidos
       allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidServiceData();
+      
+      // Permitir eliminación si es el propietario
+      allow delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
     }
     
     // Reglas para clientes
