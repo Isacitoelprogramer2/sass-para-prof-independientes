@@ -222,6 +222,11 @@ export default function ServicioFormPage() {
       newErrors.tipo = 'El tipo de servicio es requerido';
     }
 
+    // Validar servicio específico (proveniente de servicios.ts)
+    if (!formData.servicio) {
+      newErrors.servicio = 'Selecciona la categoría específica del servicio';
+    }
+
     if (formData.precio <= 0) {
       newErrors.precio = 'El precio debe ser mayor a 0';
     }

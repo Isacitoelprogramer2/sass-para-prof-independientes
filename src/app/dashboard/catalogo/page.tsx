@@ -6,6 +6,8 @@ import { Plus, Edit01, Trash01, Image01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { useServicios } from "@/hooks/use-servicios";
 import { ModalConfirmacionEliminar } from "@/components/application/modals/modal-confirmacion-eliminar";
+import { SUBCATEGORIAS } from "@/types/Categorias/subcategorias";
+import { SERVICIOS } from "@/types/Categorias/servicios";
 
 export default function CatalogoPage() {
   const router = useRouter();
@@ -76,16 +78,44 @@ export default function CatalogoPage() {
    */
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>('todos');
   
-  const serviciosFiltrados = servicios.filter(servicio => {
+  // Helper: obtener label legible para una key de categoría/subcategoría
+  const getCategoryLabel = (key?: string) => {
+    if (!key) return '';
+
+    // Buscar en SERVICIOS (subcategorías)
+    for (const parentKey of Object.keys(SERVICIOS)) {
+      const found = SERVICIOS[parentKey]?.find(item => item.value === key);
+      if (found) return found.label;
+    }
+
+    // Buscar en SUBCATEGORIAS (categorías padre)
+    for (const group of Object.values(SUBCATEGORIAS)) {
+      const found = group.find(item => item.value === key || item.id === key);
+      if (found) return found.label;
+    }
+
+    // Fallback: capitalizar la key
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  };
+
+  // --- FILTRADO: priorizar el servicio específico (e.g., "frontend") sobre la subcategoría ---
+  // Si existe `servicio` usamos esa key para tabs/filtros; si no, usamos `categoria` como respaldo
+  const serviciosFiltrados = servicios.filter((servicio) => {
     if (categoriaSeleccionada === 'todos') return true;
-    return servicio.categoria?.toLowerCase() === categoriaSeleccionada.toLowerCase();
+    const keyPrimaria = (servicio.servicio || servicio.categoria || '').toLowerCase();
+    return keyPrimaria === String(categoriaSeleccionada).toLowerCase();
   });
 
-  // Obtener categorías únicas de los servicios
+  // Obtener claves únicas para tabs (servicio -> categoria como fallback)
   const categoriasUnicas = Array.from(
-    new Set(servicios.map(s => s.categoria).filter(Boolean))
+    new Set(servicios.map((s) => s.servicio || s.categoria).filter(Boolean))
   );
-  const categorias = ['todos', ...categoriasUnicas];
+
+  // Construir lista de filtros con labels legibles
+  const categorias = [
+    { value: 'todos', label: 'Todos' },
+    ...categoriasUnicas.map(k => ({ value: String(k), label: getCategoryLabel(String(k)) }))
+  ];
 
   // Calcular estadísticas
   const precioPromedio = servicios.length > 0 
@@ -145,15 +175,15 @@ export default function CatalogoPage() {
       {/* Filtros por categoría */}
       {categorias.length > 1 && (
         <div className="mb-6 flex gap-2 overflow-x-auto">
-          {categorias.map((categoria) => (
+          {categorias.map((c) => (
             <Button
-              key={categoria}
-              color={categoria === categoriaSeleccionada ? "primary" : "tertiary"}
+              key={c.value}
+              color={c.value === categoriaSeleccionada ? "primary" : "tertiary"}
               size="sm"
-              className="whitespace-nowrap capitalize"
-              onClick={() => setCategoriaSeleccionada(categoria || 'todos')}
+              className="whitespace-nowrap"
+              onClick={() => setCategoriaSeleccionada(String(c.value) || 'todos')}
             >
-              {categoria === 'todos' ? 'Todos' : categoria}
+              {c.label}
             </Button>
           ))}
         </div>
@@ -209,28 +239,57 @@ export default function CatalogoPage() {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="text-lg font-semibold text-primary">{servicio.nombre}</h3>
-                    {servicio.categoria && (
-                      <span className="inline-flex rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 capitalize">
-                        {servicio.categoria}
-                      </span>
-                    )}
+
+                    {/* Badges: mostrar primero el servicio específico (SERVICIOS.ts), luego la subcategoría si existe */}
+                    <div className="mt-2 flex gap-2 items-center">
+                      {servicio.servicio && (
+                        <span className="inline-flex rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 capitalize">
+                          {getCategoryLabel(servicio.servicio)}
+                        </span>
+                      )}
+                      {servicio.categoria && (
+                        <span className="inline-flex rounded-full bg-secondary px-2 py-1 text-xs font-medium text-primary capitalize">
+                          {getCategoryLabel(servicio.categoria)}
+                        </span>
+                      )}
+
+                      {servicio.tipo && (
+                        <span className="inline-flex rounded-full bg-secondary px-2 py-1 text-xs font-medium text-primary capitalize">
+                          {servicio.tipo}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex space-x-1">
-                    <Button 
-                      color="tertiary" 
-                      size="sm" 
-                      iconLeading={Edit01}
-                      onClick={() => handleEditarServicio(servicio.id)}
-                      title="Editar servicio"
-                    />
-                    <Button 
-                      color="tertiary" 
-                      size="sm" 
-                      iconLeading={Trash01}
-                      onClick={() => handleEliminarServicio(servicio.id, servicio.nombre)}
-                      isDisabled={servicioEliminando === servicio.id}
-                      title="Eliminar servicio"
-                    />
+
+                  <div className="flex flex-col items-end space-y-2">
+                    {/* Estado: Activo / Inactivo */}
+                    <div>
+                      <span
+                        aria-label={servicio.activo ? 'Activo' : 'Inactivo'}
+                        title={servicio.activo ? 'Activo' : 'Inactivo'}
+                        className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${servicio.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                      >
+                        {servicio.activo ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
+
+                    <div className="flex space-x-1">
+                      <Button 
+                        color="tertiary" 
+                        size="sm" 
+                        iconLeading={Edit01}
+                        onClick={() => handleEditarServicio(servicio.id)}
+                        title="Editar servicio"
+                      />
+                      <Button 
+                        color="tertiary" 
+                        size="sm" 
+                        iconLeading={Trash01}
+                        onClick={() => handleEliminarServicio(servicio.id, servicio.nombre)}
+                        isDisabled={servicioEliminando === servicio.id}
+                        title="Eliminar servicio"
+                      />
+                    </div>
                   </div>
                 </div>
                 
