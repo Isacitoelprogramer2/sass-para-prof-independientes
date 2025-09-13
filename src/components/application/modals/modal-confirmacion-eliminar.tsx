@@ -5,7 +5,7 @@ import { Button } from "@/components/base/buttons/button";
 import { DialogTrigger, ModalOverlay, Modal, Dialog } from "./modal";
 
 /**
- * Propiedades del modal de confirmación para eliminar servicios
+ * Propiedades del modal de confirmación para eliminar elementos
  */
 interface ModalConfirmacionEliminarProps {
   /** Indica si el modal está abierto */
@@ -14,21 +14,24 @@ interface ModalConfirmacionEliminarProps {
   onClose: () => void;
   /** Función que se ejecuta cuando se confirma la eliminación */
   onConfirm: () => void;
-  /** Nombre del servicio que se va a eliminar */
-  nombreServicio: string;
+  /** Nombre del elemento que se va a eliminar */
+  nombreElemento: string;
+  /** Tipo de elemento que se va a eliminar (servicio, cliente, etc.) */
+  tipoElemento?: string;
   /** Indica si la operación de eliminación está en proceso */
   isLoading?: boolean;
 }
 
 /**
- * Modal de confirmación para eliminar servicios
+ * Modal de confirmación para eliminar elementos
  * Muestra una advertencia al usuario antes de proceder con la eliminación
  */
 export function ModalConfirmacionEliminar({
   isOpen,
   onClose,
   onConfirm,
-  nombreServicio,
+  nombreElemento,
+  tipoElemento = "elemento",
   isLoading = false
 }: ModalConfirmacionEliminarProps) {
   
@@ -41,7 +44,7 @@ export function ModalConfirmacionEliminar({
   };
 
   return (
-    <DialogTrigger isOpen={isOpen} onOpenChange={onClose}>
+    <DialogTrigger isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
       <ModalOverlay>
         <Modal className="w-full max-w-md">
           <Dialog>
@@ -54,11 +57,11 @@ export function ModalConfirmacionEliminar({
               {/* Título del modal */}
               <div className="text-center mb-4">
                 <h3 className="text-lg font-semibold text-primary">
-                  Eliminar servicio
+                  Eliminar {tipoElemento}
                 </h3>
                 <p className="mt-2 text-sm text-tertiary">
-                  ¿Estás seguro de que deseas eliminar el servicio{" "}
-                  <span className="font-medium text-primary">"{nombreServicio}"</span>?
+                  ¿Estás seguro de que deseas eliminar {tipoElemento === "elemento" ? "el elemento" : `${tipoElemento === "cliente" ? "al cliente" : `el ${tipoElemento}`}`}{" "}
+                  <span className="font-medium text-primary">"{nombreElemento}"</span>?
                 </p>
                 <p className="mt-1 text-sm text-error-600">
                   Esta acción no se puede deshacer.

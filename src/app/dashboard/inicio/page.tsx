@@ -260,6 +260,31 @@ export default function InicioPage() {
           </div>
         </div>
 
+        {/* Acciones rápidas */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="bg-primary border border-secondary rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Clientes Recientes</h3>
+          <div className="space-y-3">
+            {clientes.slice(0, 3).map((cliente) => (
+              <div key={cliente.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50">
+                    <User01 className="h-4 w-4 text-brand-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-primary">{cliente.nombre}</p>
+                    <p className="text-xs text-tertiary">{cliente.ultimaVisita}</p>
+                  </div>
+                </div>
+                <Button color="tertiary" size="sm">
+                  Contactar
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
         {/* Tickets pendientes */}
         <div className="bg-primary border border-secondary rounded-lg p-6">
           <div className="flex items-center justify-between mb-6">

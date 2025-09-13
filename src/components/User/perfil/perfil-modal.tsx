@@ -105,96 +105,128 @@ export default function PerfilModal({ isOpen, onClose, onShowSuccess, onShowErro
   };
 
   return (
+    // Overlay con padding mejorado
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[9999] overflow-y-auto bg-black/70 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 lg:p-8"
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      {/* Modal */}
+      {/* Modal más ancho y con mejor estructura */}
       <div
         ref={modalRef}
         tabIndex={-1}
         onKeyDown={handleKeyDown}
         onClick={handleModalClick}
-        className="relative w-full max-w-4xl bg-primary-solid rounded-lg shadow-2xl transform transition-all duration-300"
+        className="relative w-[100vh] bg-primary-solid rounded-2xl shadow-2xl transition-all duration-300 max-h-[90vh] flex flex-col"
         role="document"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border-primary">
-          <div>
-            <h2 id="modal-title" className="text-2xl font-semibold text-text-primary">Mi Perfil</h2>
-            <p className="mt-1 text-sm text-text-secondary">
+        {/* Header con espacio para el botón de cerrar */}
+        <div className="relative flex items-start justify-between p-6 sm:p-8 border-b border-border-primary shrink-0">
+          <div className="pr-12">
+            <h2 id="modal-title" className="text-2xl sm:text-3xl font-semibold text-text-primary">
+              Mi Perfil
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-text-secondary">
               Gestiona tu información personal y de negocio
             </p>
           </div>
+
+          {/* Botón cerrar con posición mejorada */}
           <button
             onClick={onClose}
-            className="p-2 text-fg-quaternary hover:text-fg-quaternary_hover hover:bg-bg-secondary_hover rounded-md transition-colors"
+            className="absolute top-6 right-6 sm:top-8 sm:right-8 p-2.5 text-fg-quaternary hover:text-fg-quaternary_hover hover:bg-bg-secondary_hover rounded-lg transition-all duration-200 group"
             aria-label="Cerrar modal"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-200" />
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-border-primary">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
-            <button
-              onClick={() => setActiveTab('personal')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'personal'
-                  ? 'border-border-brand text-text-brand-secondary'
-                  : 'border-transparent text-text-tertiary hover:text-text-secondary_hover hover:border-border-secondary'
-              }`}
-            >
-              Información Personal
-            </button>
-            <button
-              onClick={() => setActiveTab('negocio')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'negocio'
-                  ? 'border-border-brand text-text-brand-secondary'
-                  : 'border-transparent text-text-tertiary hover:text-text-secondary_hover hover:border-border-secondary'
-              }`}
-            >
-              Información del Negocio
-            </button>
-          </nav>
+        {/* Tabs de navegación */}
+        <div className="flex border-b border-border-primary px-6 sm:px-8 shrink-0">
+          <button
+            onClick={() => setActiveTab('personal')}
+            className={`px-4 py-3 text-sm sm:text-base font-medium transition-all duration-200 border-b-2 -mb-px ${
+              activeTab === 'personal'
+                ? 'text-text-primary border-brand-primary'
+                : 'text-text-secondary border-transparent hover:text-text-primary hover:border-border-secondary'
+            }`}
+          >
+            Información Personal
+          </button>
+          <button
+            onClick={() => setActiveTab('negocio')}
+            className={`px-4 py-3 text-sm sm:text-base font-medium transition-all duration-200 border-b-2 -mb-px ml-4 sm:ml-8 ${
+              activeTab === 'negocio'
+                ? 'text-text-primary border-brand-primary'
+                : 'text-text-secondary border-transparent hover:text-text-primary hover:border-border-secondary'
+            }`}
+          >
+            Información del Negocio
+          </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
-          {activeTab === 'personal' && (
-            <div className="space-y-6">
-              <PerfilDelUsuario 
-                usuario={usuario}
-                onSave={handleSave}
-                loading={loading}
-                saving={saving}
-              />
+        {/* Content con scroll mejorado */}
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="p-6 sm:p-8 lg:p-10">
+            {/* Grid layout para pantallas grandes */}
+            <div className="w-full max-w-7xl mx-auto">
+              {activeTab === 'personal' && (
+                <div className="animate-fadeIn">
+                  <PerfilDelUsuario 
+                    usuario={usuario}
+                    onSave={handleSave}
+                    loading={loading}
+                    saving={saving}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'negocio' && (
+                <div className="animate-fadeIn">
+                  <InfoDelNegocio
+                    usuario={usuario}
+                    onSave={handleSave}
+                    loading={loading}
+                    saving={saving}
+                  />
+                </div>
+              )}
             </div>
-          )}
-          
-          {activeTab === 'negocio' && (
-            <div className="space-y-6">
-              <InfoDelNegocio
-                usuario={usuario}
-                onSave={handleSave}
-                loading={loading}
-                saving={saving}
-              />
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-border-primary bg-bg-secondary rounded-b-lg">
-          <Button color="secondary" onClick={onClose}>
-            Cerrar
-          </Button>
+        {/* Footer con acciones */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-6 sm:p-8 border-t border-border-primary bg-bg-secondary rounded-b-2xl shrink-0">
+          <div className="text-xs sm:text-sm text-text-secondary">
+            {hasChanges && (
+              <span className="inline-flex items-center gap-2">
+                <span className="w-2 h-2 bg-warning-solid rounded-full animate-pulse"></span>
+                Tienes cambios sin guardar
+              </span>
+            )}
+          </div>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <Button 
+              color="secondary" 
+              onClick={onClose}
+              className="w-full sm:w-auto"
+            >
+              Cerrar
+            </Button>
+            {hasChanges && (
+              <Button 
+                color="primary" 
+                onClick={handleGlobalSave}
+                disabled={saving}
+                className="w-full sm:w-auto"
+              >
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

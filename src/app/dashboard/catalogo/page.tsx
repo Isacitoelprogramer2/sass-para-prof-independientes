@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit01, Trash01, Image01 } from "@untitledui/icons";
+import { Plus, Edit01, Trash01, Image01, ArrowNarrowUpRight } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { useServicios } from "@/hooks/use-servicios";
 import { ModalConfirmacionEliminar } from "@/components/application/modals/modal-confirmacion-eliminar";
@@ -122,6 +122,9 @@ export default function CatalogoPage() {
     ? servicios.reduce((sum, s) => sum + s.precio, 0) / servicios.length 
     : 0;
 
+  // Contador de servicios activos (solo los que tienen activo === true)
+  const serviciosActivos = servicios.filter((s) => s.activo).length;
+
   // Estado de carga
   if (loading) {
     return (
@@ -151,13 +154,25 @@ export default function CatalogoPage() {
           >
             Nuevo servicio
           </Button>
+
+          <Button
+            iconLeading={ArrowNarrowUpRight}
+            color='tertiary'
+            size="sm" 
+            onClick={() => router.push('/catalogo')}
+          >
+            Página de catálogo
+          </Button>
+
+          
         </div>
       </div>
 
       {/* Estadísticas rápidas */}
       <div className="mt-8 mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-primary">{servicios.length}</p>
+          {/* Total de servicios activos */}
+          <p className="text-2xl font-bold text-primary">{serviciosActivos}</p>
           <p className="text-sm text-tertiary">Servicios Activos</p>
         </div>
         <div className="bg-primary border border-secondary rounded-lg p-4 text-center">
@@ -247,17 +262,8 @@ export default function CatalogoPage() {
                           {getCategoryLabel(servicio.servicio)}
                         </span>
                       )}
-                      {servicio.categoria && (
-                        <span className="inline-flex rounded-full bg-secondary px-2 py-1 text-xs font-medium text-primary capitalize">
-                          {getCategoryLabel(servicio.categoria)}
-                        </span>
-                      )}
-
-                      {servicio.tipo && (
-                        <span className="inline-flex rounded-full bg-secondary px-2 py-1 text-xs font-medium text-primary capitalize">
-                          {servicio.tipo}
-                        </span>
-                      )}
+                      
+                      
                     </div>
                   </div>
 
@@ -299,19 +305,18 @@ export default function CatalogoPage() {
                   </p>
                 )}
                 
-                <div className="flex items-center justify-between">
+                <div className="flex gap-3 items-center justify-between">
                   <div>
                     <p className="text-xl font-bold text-primary">
                       S/{servicio.precio.toFixed(2)}
                     </p>
-                    <p className="text-sm text-tertiary capitalize">{servicio.tipo}</p>
+                    {servicio.tipo && (
+                        <span className="inline-flex rounded-full bg-secondary px-2 py-1 text-xs font-medium text-primary capitalize">
+                          {servicio.tipo}
+                        </span>
+                      )}
                   </div>
-                  <Button 
-                    size="sm"
-                    onClick={() => handleEditarServicio(servicio.id)}
-                  >
-                    Ver detalles
-                  </Button>
+                    
                 </div>
               </div>
             </div>
@@ -324,7 +329,7 @@ export default function CatalogoPage() {
         isOpen={modalEliminarAbierto}
         onClose={cerrarModalEliminar}
         onConfirm={confirmarEliminacion}
-        nombreServicio={servicioAEliminar?.nombre || ""}
+        nombreElemento={servicioAEliminar?.nombre || ''}
         isLoading={servicioEliminando === servicioAEliminar?.id}
       />
     </div>

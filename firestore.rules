@@ -37,8 +37,13 @@ service cloud.firestore {
     // Función helper para verificar datos válidos de cliente
     function isValidClientData() {
       let data = request.resource.data;
-      return data.keys().hasAll(['nombre', 'contacto', 'usuarioId']) &&
-             data.contacto.keys().hasAny(['telefono', 'correo']);
+      return data.keys().hasAll(['tipo', 'datos', 'usuarioId']) &&
+             data.tipo in ['HABITUAL', 'AMBULATORIO'] &&
+             data.datos.keys().hasAll(['nombre', 'telefono', 'estado']) &&
+             data.datos.estado in ['ACTIVO', 'INACTIVO'] &&
+             data.datos.nombre is string &&
+             data.datos.telefono is string &&
+             data.usuarioId is string;
     }
     
     // Función helper para verificar datos válidos de cita
@@ -82,9 +87,14 @@ service cloud.firestore {
       // Solo el propietario puede leer y escribir sus clientes
       allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
       
-      // Validar datos al crear/actualizar
+      // Permitir creación si es el propietario y los datos son válidos
       allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) && isValidClientData();
+      
+      // Permitir actualización si es el propietario y los datos son válidos
       allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidClientData();
+      
+      // Permitir eliminación si es el propietario
+      allow delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
     }
     
     // Reglas para citas
