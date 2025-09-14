@@ -49,9 +49,11 @@ service cloud.firestore {
     // Función helper para verificar datos válidos de cita
     function isValidCitaData() {
       let data = request.resource.data;
-      return data.keys().hasAll(['clienteId', 'servicioId', 'usuarioId', 'fechaHora', 'estado']) &&
+      return data.keys().hasAll(['servicioId', 'usuarioId', 'fechaReservada', 'estado']) &&
+             ((data.keys().hasAll(['clienteId']) && data.clienteId is string) ||
+              (data.keys().hasAll(['clienteAmbulatorio']) && data.clienteAmbulatorio.nombre is string)) &&
              data.estado in ['PENDIENTE', 'CONFIRMADA', 'COMPLETADA', 'CANCELADA'] &&
-             data.fechaHora is timestamp;
+             data.fechaReservada is timestamp;
     }
 
     // Reglas para usuarios

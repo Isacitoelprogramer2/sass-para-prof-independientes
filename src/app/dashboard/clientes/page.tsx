@@ -169,6 +169,17 @@ export default function ClientesPage() {
     setSearchTerm(value);
   };
 
+  // Construir enlace de WhatsApp a partir del número de teléfono
+  const buildWhatsAppLink = (telefono?: string | null) => {
+    if (!telefono) return undefined;
+    // Normalizar: quitar espacios, guiones, paréntesis y signos +
+    const cleaned = telefono.replace(/[^0-9]/g, "");
+    if (!cleaned) return undefined;
+    // Si el número no incluye código de país, asumir prefijo local (ej. 34 para España) es peligroso;
+    // aquí asumimos que los números ya están guardados con código de país o el negocio manejará casos faltantes.
+    return `https://wa.me/${cleaned}`;
+  };
+
   // Función para manejar cambios en el filtro de estado
   const handleFiltroChange = (filtro: "todos" | "activos" | "inactivos") => {
     setFiltroEstado(filtro);
@@ -359,7 +370,19 @@ export default function ClientesPage() {
                         </div>
                         <div className="flex items-center space-x-1">
                           <Phone className="h-4 w-4" />
-                          <span>{cliente.telefono}</span>
+                          {cliente.telefono ? (
+                            <a
+                              href={buildWhatsAppLink(cliente.telefono)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                              aria-label={`Abrir WhatsApp a ${cliente.telefono}`}
+                            >
+                              {cliente.telefono}
+                            </a>
+                          ) : (
+                            <span>{cliente.telefono}</span>
+                          )}
                         </div>
                       </div>
                     </div>

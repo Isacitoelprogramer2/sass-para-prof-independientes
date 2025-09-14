@@ -1,5 +1,6 @@
 export interface Cita {
   id: string;
+  usuarioId: string; // ID del usuario propietario de la cita
   codigoAcceso: string; // código único generado automáticamente
   clienteId?: string;   // si es HABITUAL
   clienteAmbulatorio?: {
