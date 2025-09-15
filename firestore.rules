@@ -113,6 +113,37 @@ service cloud.firestore {
                        isValidCitaData();
       allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidCitaData();
     }
+
+    // Reglas para tickets (soporte/servicios)
+    match /tickets/{ticketId} {
+      // Solo el propietario (usuarioId) puede leer y escribir sus tickets
+      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
+
+      // Permitir lectura por parte del cliente asociado (si existe clienteId)
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.clienteId;
+
+      // Validación básica al crear
+      allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) &&
+                    request.resource.data.keys().hasAll(['descripcion', 'fechaIngreso', 'tipoUrgencia', 'usuarioId']) &&
+                    request.resource.data.tipoUrgencia in ['ALTA', 'MEDIA', 'BAJA'];
+
+      // Actualizaciones y borrado solo por propietario
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
+    }
+
+    // Reglas para pagos
+    match /pagos/{pagoId} {
+      // Solo el propietario puede ver y gestionar sus pagos
+      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
+
+      // Permitir creación si el payload contiene monto y usuarioId válidos
+      allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) &&
+                    request.resource.data.keys().hasAll(['monto', 'usuarioId', 'fecha']) &&
+                    request.resource.data.monto is number;
+
+      // Actualización/ eliminación solo por propietario
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
+    }
     
     // Reglas para archivos de usuario (fotos de perfil, portadas, etc.)
     match /usuario-files/{userId}/{allPaths=**} {

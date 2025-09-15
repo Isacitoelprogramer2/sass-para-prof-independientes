@@ -245,19 +245,16 @@ export default function InfoDelNegocio({
 
       {/* Ubicación */}
       <div className="space-y-6">
-        <h3 className="text-lg font-medium text-gray-100">Ubicación</h3>
+        <h3 className="text-lg font-medium text-gray-100">Ubicación (opcional)</h3>
         
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">
-            Ubicación
-          </label>
           <Input
-            placeholder="Ciudad, Estado, País o dirección completa"
+            placeholder="Link de google maps o dirección física"
             value={formData.ubicacion}
             onChange={(value) => handleInputChange('ubicacion', value)}
           />
           <p className="mt-1 text-xs text-gray-500">
-            Ubicación donde prestas tus servicios (opcional)
+            Ubicación donde prestas tus servicios o atiendes a tus clientes de manera presencial
           </p>
         </div>
       </div>

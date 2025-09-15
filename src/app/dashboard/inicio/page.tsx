@@ -16,43 +16,11 @@ import {
   Plus
 } from "@untitledui/icons";
 import { useState } from "react";
+import StatsGrid from '@/components/dashboard/StatsGrid';
 
 export default function InicioPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   
-  const stats = [
-    {
-      name: "Citas Agendadas",
-      value: "24",
-      icon: Calendar,
-      change: "+12%",
-      changeType: "positive" as const,
-      description: "Esta semana"
-    },
-    {
-      name: "Servicios Activos", 
-      value: "8",
-      icon: Activity,
-      change: "+2",
-      changeType: "positive" as const,
-      description: "En curso"
-    },
-    {
-      name: "Tickets Pendientes",
-      value: "5",
-      icon: FileX01,
-      change: "-3",
-      changeType: "negative" as const,
-      description: "Por resolver"
-    },
-    {
-      name: "Ingresos del Mes",
-      value: "$12,450",
-      icon: CurrencyDollar,
-      change: "+8%",
-      changeType: "positive" as const,
-    },
-  ];
 
   const todaySchedule = [
     { time: "09:00", client: "Ana Martínez", service: "Consulta médica", status: "confirmed" },
@@ -217,26 +185,8 @@ export default function InicioPage() {
         </div>
       </div>
 
-      {/* Indicadores clave mejorados */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        {stats.map((stat) => (
-          <div
-            key={stat.name}
-            className="bg-primary border border-secondary rounded-lg p-6 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-950/30">
-                <stat.icon className="h-6 w-6 text-brand-400" />
-              </div>
-            </div>
-            <div>
-              <p className="text-display-xs font-semibold text-primary">{stat.value}</p>
-              <p className="text-sm font-medium text-tertiary mt-1">{stat.name}</p>
-              <p className="text-xs text-quaternary mt-1">{stat.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Indicadores clave mejorados (datos reales) */}
+      <StatsGrid />
 
       {/* Vista semanal */}
       <div className="bg-primary border border-secondary rounded-lg p-6 mb-8">
@@ -343,26 +293,7 @@ export default function InicioPage() {
         </div>
       </div>
 
-      {/* Acciones rápidas y Clientes recientes */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
-        {/* Acciones rápidas */}
-        <div className="bg-primary border border-secondary rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-primary mb-4">Acciones Rápidas</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {accionesRapidas.map((accion) => (
-              <button
-                key={accion.id}
-                className="flex flex-col items-center justify-center p-4 bg-secondary rounded-lg hover:bg-tertiary transition-colors group"
-              >
-                <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${accion.color} mb-3 group-hover:opacity-90 transition-opacity`}>
-                  <accion.icon className="h-6 w-6 text-white" />
-                </div>
-                <span className="font-medium text-primary">{accion.nombre}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      
     </div>
   );
 }
