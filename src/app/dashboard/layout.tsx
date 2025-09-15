@@ -42,8 +42,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: Home01,
     },
     {
-      label: "Gestión de Citas",
-      href: "/dashboard/citas", 
+      label: "Gestión de Servicios",
+      href: "/dashboard/servicios",
       icon: Calendar,
     },
     {

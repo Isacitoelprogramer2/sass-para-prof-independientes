@@ -3,23 +3,25 @@
 import { useState } from "react";
 import { Plus, Calendar, Clock, User01, X } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
-import { Check, CheckCheck } from "lucide-react";
+import { Check} from "lucide-react";
 import { useCitas } from "@/hooks/use-citas";
 import { useClientes } from "@/hooks/use-clientes";
 import { useServicios } from "@/hooks/use-servicios";
 import { CitaModal, CitaFormData } from "@/components/application/modals/cita-modal";
+import CitaDetailsModal from "@/components/application/modals/cita-details-modal";
 import { Cita } from "@/types/cita";
 
 // Tipos para filtros
 type FiltroFecha = 'todas' | 'hoy' | 'semana' | 'mes';
 type FiltroEstado = 'todas' | 'CONFIRMADA' | 'PENDIENTE' | 'CANCELADA';
 
-export default function CitasPage() {
+export default function ServiciosPage() {
   // Estados locales para filtros y modal
   const [filtroFecha, setFiltroFecha] = useState<FiltroFecha>('todas');
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('todas');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [citaEditando, setCitaEditando] = useState<Cita | null>(null);
+  const [selectedCita, setSelectedCita] = useState<Cita | null>(null);
 
   // Hooks para gestión de datos
   const { 
@@ -27,19 +29,19 @@ export default function CitasPage() {
     loading, 
     crearCita, 
     cambiarEstadoCita, 
+    marcarPagado,
     obtenerCitasHoy, 
     obtenerCitasEstaSemana, 
-    obtenerCitasEsteMes,
-    filtrarCitasPorEstado 
+    obtenerCitasEsteMes, 
   } = useCitas();
   
   const { clientes } = useClientes();
   const { servicios } = useServicios();
 
   /**
-   * Función para obtener las citas filtradas según los criterios seleccionados
+   * Función para obtener los servicios filtrados según los criterios seleccionados
    */
-  const obtenerCitasFiltradas = () => {
+  const obtenerServiciosFiltrados = () => {
     let citasFiltradas = [...citas];
 
     // Aplicar filtro de fecha
@@ -187,26 +189,33 @@ export default function CitasPage() {
     }
   };
 
-  // Obtener citas filtradas
-  const citasFiltradas = obtenerCitasFiltradas();
+  // Obtener servicios filtrados
+  const citasFiltradas = obtenerServiciosFiltrados();
 
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-display-xs font-semibold text-primary">Gestión de Citas</h1>
+          <h1 className="text-display-xs font-semibold text-primary">Gestión de Servicios</h1>
           <p className="mt-2 text-md text-tertiary">
-            Administra las citas y reservas de tus clientes
+            Administra los servicios y reservas de tus clientes
           </p>
         </div>
         <Button size="sm" iconLeading={Plus} onClick={() => setModalAbierto(true)}>
-          Nueva Cita
-        </Button>
+            Nuevo servicio
+          </Button>
       </div>
 
       {/* Filtros y búsqueda */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2">
+          <Button 
+            color={filtroFecha === 'todas' ? "secondary" : "tertiary"} 
+            size="sm"
+            onClick={() => setFiltroFecha('todas')}
+          >
+            Todas
+          </Button>
           <Button 
             color={filtroFecha === 'hoy' ? "secondary" : "tertiary"} 
             size="sm"
@@ -228,13 +237,7 @@ export default function CitasPage() {
           >
             Este mes
           </Button>
-          <Button 
-            color={filtroFecha === 'todas' ? "secondary" : "tertiary"} 
-            size="sm"
-            onClick={() => setFiltroFecha('todas')}
-          >
-            Todas
-          </Button>
+          
         </div>
         <div className="flex gap-2">
           <Button 
@@ -242,14 +245,14 @@ export default function CitasPage() {
             size="sm"
             onClick={() => setFiltroEstado('todas')}
           >
-            Todas
+            Todos
           </Button>
           <Button 
             color={filtroEstado === 'CONFIRMADA' ? "secondary" : "tertiary"} 
             size="sm"
             onClick={() => setFiltroEstado('CONFIRMADA')}
           >
-            Confirmadas
+            Confirmados
           </Button>
           <Button 
             color={filtroEstado === 'PENDIENTE' ? "secondary" : "tertiary"} 
@@ -258,53 +261,73 @@ export default function CitasPage() {
           >
             Pendientes
           </Button>
+          <Button 
+            color={filtroEstado === 'PENDIENTE' ? "secondary" : "tertiary"} 
+            size="sm"
+            onClick={() => setFiltroEstado('CANCELADA')}
+          >
+            Cancelados
+          </Button>
         </div>
       </div>
 
-      {/* Lista de citas */}
+      {/*
+        Sección principal para mostrar la lista de servicios (citas) filtrados.
+        Incluye manejo de estados de carga, lista vacía y renderizado de cada cita.
+      */}
       <div className="bg-primary border border-secondary rounded-lg overflow-hidden">
+        {/* Encabezado de la sección con el contador de servicios */}
         <div className="px-6 py-4 border-b border-secondary bg-secondary">
           <h3 className="text-lg font-semibold text-primary">
-            {loading ? "Cargando citas..." : `Citas (${citasFiltradas.length})`}
+            {loading ? "Cargando servicios..." : `Servicios (${citasFiltradas.length})`}
           </h3>
         </div>
-        
+
+        {/* Estado de carga: muestra mensaje mientras se obtienen los datos */}
         {loading ? (
           <div className="p-6 text-center">
-            <p className="text-tertiary">Cargando citas...</p>
+            <p className="text-tertiary">Cargando servicios...</p>
           </div>
         ) : citasFiltradas.length === 0 ? (
+          // Si no hay servicios, muestra un estado vacío con opción para crear uno nuevo
           <div className="p-6 text-center">
             <div className="flex flex-col items-center">
               <Calendar className="h-12 w-12 text-tertiary mb-4" />
-              <h4 className="text-lg font-medium text-primary mb-2">No hay citas</h4>
+              <h4 className="text-lg font-medium text-primary mb-2">No hay servicios programados</h4>
               <p className="text-tertiary mb-4">
                 {filtroFecha !== 'todas' || filtroEstado !== 'todas' 
-                  ? 'No hay citas que coincidan con los filtros seleccionados.'
-                  : 'No tienes citas programadas aún. ¡Crea tu primera cita!'
+                  ? 'No hay servicios que coincidan con los filtros seleccionados.'
+                  : 'No tienes servicios programados aún. ¡Crea tu primer servicio!'
                 }
               </p>
+              {/* Botón para abrir el modal de nuevo servicio */}
               <Button size="sm" iconLeading={Plus} onClick={() => setModalAbierto(true)}>
-                Nueva Cita
+                Nuevo Servicio
               </Button>
             </div>
           </div>
         ) : (
+          // Renderizado de la lista de servicios (citas)
           <div className="divide-y divide-secondary">
-            {citasFiltradas.map((cita) => {
+            {citasFiltradas.map((cita: Cita) => {
+              // Obtiene los datos del cliente y servicio para mostrar
               const datosCliente = obtenerDatosCliente(cita);
               const datosServicio = obtenerDatosServicio(cita);
-              
+
               return (
-                <div key={cita.id} className="p-6 hover:bg-secondary transition-colors">
+                <div key={cita.id} className="p-6 hover:bg-secondary transition-colors" onClick={() => setSelectedCita(cita)}>
                   <div className="flex items-center justify-between">
+                    {/* Información del cliente y servicio */}
                     <div className="flex items-start space-x-4">
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
                         <User01 className="h-5 w-5 text-brand-600" />
                       </div>
                       <div>
+                        {/* Nombre del cliente */}
                         <h4 className="text-md font-semibold text-primary">{datosCliente.nombre}</h4>
+                        {/* Nombre del servicio */}
                         <p className="text-sm text-tertiary">{datosServicio.nombre}</p>
+                        {/* Detalles de la cita: fecha, hora, precio y notas */}
                         <div className="mt-2 flex items-center space-x-4 text-sm text-tertiary">
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-4 w-4" />
@@ -315,7 +338,8 @@ export default function CitasPage() {
                             <span>{formatearHora(cita.fechaReservada)}</span>
                           </div>
                           <span>•</span>
-                          <span>${datosServicio.precio}</span>
+                          <span>S/{datosServicio.precio}</span>
+                          {/* Si hay notas, las muestra */}
                           {cita.notas && (
                             <>
                               <span>•</span>
@@ -325,35 +349,54 @@ export default function CitasPage() {
                         </div>
                       </div>
                     </div>
+                    {/* Acciones y estado de la cita */}
                     <div className="flex items-center space-x-3">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${getEstadoColor(
-                          cita.estado
-                        )}`}
-                      >
-                        {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1).toLowerCase()}
-                      </span>
+                      {/* Etiqueta de estado con color dinámico */}
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${getEstadoColor(
+                            cita.estado
+                          )}`}
+                        >
+                          {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1).toLowerCase()}
+                        </span>
+                        {/* Estado de pago */}
+                        <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${cita.pagado ? 'bg-success-50 text-success-700 border-success-200' : 'bg-warning-50 text-warning-700 border-warning-200'}`}>
+                          {cita.pagado ? 'Pagado' : 'Pendiente de pago'}
+                        </span>
+                      </div>
                       <div className="flex space-x-2">
+                        {/* Botón para aceptar la cita si está pendiente */}
                         {cita.estado === 'PENDIENTE' && (
                           <Button 
                             color="tertiary" 
                             size="sm" 
                             iconLeading={Check}
-                            onClick={() => manejarAceptarCita(cita.id)}
+                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); manejarAceptarCita(cita.id); }}
                           >
                             Aceptar 
                           </Button>
                         )}
+                        {/* Botón para cancelar la cita si no está cancelada */}
                         {cita.estado !== 'CANCELADA' && (
                           <Button 
                             color="tertiary" 
                             size="sm" 
                             iconLeading={X}
-                            onClick={() => manejarCancelarCita(cita.id)}
+                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); manejarCancelarCita(cita.id); }}
                           >
                             Cancelar
                           </Button>
                         )}
+                        {/* Botón rápido para alternar estado de pago */}
+                        <Button
+                          color={cita.pagado ? 'secondary' : 'tertiary'}
+                          size="sm"
+                          iconLeading={Check}
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); marcarPagado?.(cita.id); }}
+                        >
+                          {cita.pagado ? 'Marcar no pagado' : 'Marcar pagado'}
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -364,16 +407,14 @@ export default function CitasPage() {
         )}
       </div>
 
-      {/* Vista de calendario placeholder */}
-      <div className="mt-8 bg-primary border border-secondary rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-primary mb-4">Vista de Calendario</h3>
-        <div className="h-64 bg-secondary rounded-lg flex items-center justify-center">
-          <div className="text-center">
-            <Calendar className="h-12 w-12 text-tertiary mx-auto mb-2" />
-            <p className="text-tertiary">Vista de calendario próximamente</p>
-          </div>
-        </div>
-      </div>
+      {/* Detalles de la cita: modal que se abre al hacer click en una fila */}
+      <CitaDetailsModal
+        isOpen={!!selectedCita}
+        onClose={() => setSelectedCita(null)}
+        cita={selectedCita}
+        clientes={clientes}
+        servicios={servicios}
+      />
 
       {/* Modal para nueva cita */}
       <CitaModal

@@ -10,7 +10,7 @@ import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-b
 import { Form } from "@/components/base/form/form";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { DatePicker } from "@/components/application/date-picker/date-picker";
-import { Calendar, Clock, User01, X } from "@untitledui/icons";
+import { Calendar, X } from "@untitledui/icons";
 import { useClientes } from "@/hooks/use-clientes";
 import { useServicios } from "@/hooks/use-servicios";
 import { today, getLocalTimeZone, CalendarDate } from "@internationalized/date";
@@ -66,15 +66,13 @@ function validate(data: CitaFormData) {
   
   // Validar fecha (obligatoria y no puede ser anterior a hoy)
   if (!data.fechaReservada) {
-    errors.fechaReservada = "La fecha es obligatoria";
+    errors.fechaReservada = "La fecha y hora son obligatorias";
   } else {
     const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
     const fechaSeleccionada = new Date(data.fechaReservada);
-    fechaSeleccionada.setHours(0, 0, 0, 0);
     
     if (fechaSeleccionada < hoy) {
-      errors.fechaReservada = "La fecha no puede ser anterior a hoy";
+      errors.fechaReservada = "La fecha y hora no pueden ser anteriores a ahora";
     }
   }
   
@@ -96,6 +94,7 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
   // Estados para los selects controlados
   const [selectedClienteId, setSelectedClienteId] = useState<string>("");
   const [selectedServicioId, setSelectedServicioId] = useState<string>("");
+  const [selectedTime, setSelectedTime] = useState<string>("");
 
   const [errors, setErrors] = useState<{ 
     clienteId?: string; 
@@ -129,6 +128,11 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
         initialData.fechaReservada.getDate()
       );
       setSelectedDate(calendarDate);
+      
+      // Inicializar la hora seleccionada
+      const hours = initialData.fechaReservada.getHours().toString().padStart(2, '0');
+      const minutes = initialData.fechaReservada.getMinutes().toString().padStart(2, '0');
+      setSelectedTime(`${hours}:${minutes}`);
     } else {
       const defaultForm = {
         tipoCliente: "HABITUAL" as const,
@@ -140,6 +144,7 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
       setSelectedClienteId("");
       setSelectedServicioId("");
       setSelectedDate(today(getLocalTimeZone()));
+      setSelectedTime("09:00"); // Hora por defecto
     }
   }, [isOpen, initialData]);
 
@@ -162,6 +167,11 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
     setSelectedDate(date);
     if (date) {
       const jsDate = date.toDate(getLocalTimeZone());
+      // Mantener la hora seleccionada al cambiar la fecha
+      if (selectedTime) {
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        jsDate.setHours(hours, minutes, 0, 0);
+      }
       onChangeField('fechaReservada', jsDate);
     }
   };
@@ -196,6 +206,44 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
         [field]: value
       }
     }));
+  };
+  
+  /**
+   * Función para generar opciones de horas
+   */
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const hourStr = hour.toString().padStart(2, '0');
+        const minuteStr = minute.toString().padStart(2, '0');
+        const timeStr = `${hourStr}:${minuteStr}`;
+        options.push(
+          <SelectItem
+            key={timeStr}
+            id={timeStr}
+            label={timeStr}
+          />
+        );
+      }
+    }
+    return options;
+  };
+  
+  /**
+   * Función para manejar selección de hora
+   */
+  const handleTimeSelection = (key: any) => {
+    const time = String(key || "");
+    setSelectedTime(time);
+    
+    // Actualizar la fechaReservada con la nueva hora
+    if (form.fechaReservada) {
+      const [hours, minutes] = time.split(':').map(Number);
+      const newDate = new Date(form.fechaReservada);
+      newDate.setHours(hours, minutes, 0, 0);
+      onChangeField('fechaReservada', newDate);
+    }
   };
 
   /**
@@ -265,10 +313,10 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-primary">
-                    {initialData ? "Editar Cita" : "Nueva Cita"}
+                    {initialData ? "Editar servicio" : "Nuevo servicio"}
                   </h2>
                   <p className="text-sm text-tertiary">
-                    Completa los datos para {initialData ? "actualizar" : "crear"} la cita
+                    Completa los datos para {initialData ? "actualizar" : "crear"} el servicio
                   </p>
                 </div>
               </div>
@@ -381,6 +429,19 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
                   <p className="text-sm text-error-600">{errors.fechaReservada}</p>
                 )}
               </div>
+              
+              {/* Hora */}
+              <Select
+                label="Hora *"
+                placeholder="Seleccionar hora..."
+                isRequired
+                isInvalid={!!errors.fechaReservada}
+                hint={errors.fechaReservada}
+                selectedKey={selectedTime}
+                onSelectionChange={handleTimeSelection}
+              >
+                {generateTimeOptions()}
+              </Select>
 
               {/* Estado de la cita */}
               <div className="space-y-2">

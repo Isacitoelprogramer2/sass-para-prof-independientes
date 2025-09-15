@@ -11,7 +11,9 @@ import {
   ArrowRight,
   Activity,
   X,
-  FileX01
+  FileX01,
+  User01,
+  Plus
 } from "@untitledui/icons";
 import { useState } from "react";
 
@@ -49,7 +51,6 @@ export default function InicioPage() {
       icon: CurrencyDollar,
       change: "+8%",
       changeType: "positive" as const,
-      description: "vs último mes"
     },
   ];
 
@@ -109,6 +110,19 @@ export default function InicioPage() {
     { id: "T-001", client: "Roberto Silva", issue: "Cambio de horario", priority: "high", time: "hace 2h" },
     { id: "T-002", client: "Carmen Ruiz", issue: "Consulta sobre servicio", priority: "medium", time: "hace 5h" },
     { id: "T-003", client: "Miguel Ángel", issue: "Problema con pago", priority: "high", time: "hace 1d" },
+  ];
+
+  const clientes = [
+    { id: 1, nombre: "Ana Martínez", ultimaVisita: "Hace 2 días" },
+    { id: 2, nombre: "Carlos López", ultimaVisita: "Hace 1 semana" },
+    { id: 3, nombre: "María García", ultimaVisita: "Hace 3 días" },
+  ];
+
+  const accionesRapidas = [
+    { id: 1, nombre: "Nueva Cita", icon: Calendar, color: "bg-blue-500" },
+    { id: 2, nombre: "Nuevo Cliente", icon: User01, color: "bg-green-500" },
+    { id: 3, nombre: "Nuevo Ticket", icon: FileX01, color: "bg-purple-500" },
+    { id: 4, nombre: "Nuevo Servicio", icon: Plus, color: "bg-orange-500" },
   ];
 
   const getStatusColor = (status: string) => {
@@ -224,107 +238,8 @@ export default function InicioPage() {
         ))}
       </div>
 
-      {/* Vista de agenda y tickets */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
-        {/* Agenda del día */}
-        <div className="lg:col-span-2 bg-primary border border-secondary rounded-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-primary">Agenda de Hoy</h3>
-            <button className="text-sm text-brand-600 font-medium hover:text-brand-700 flex items-center">
-              Ver calendario completo
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </button>
-          </div>
-          
-          <div className="space-y-3">
-            {todaySchedule.map((appointment, idx) => (
-              <div 
-                key={idx} 
-                className="flex items-center justify-between p-4 bg-secondary rounded-lg hover:bg-tertiary transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <p className="text-lg font-semibold text-primary">{appointment.time}</p>
-                  </div>
-                  <div className="h-12 w-px bg-border"></div>
-                  <div>
-                    <p className="font-medium text-primary">{appointment.client}</p>
-                    <p className="text-sm text-tertiary">{appointment.service}</p>
-                  </div>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
-                  {getStatusText(appointment.status)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Acciones rápidas */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="bg-primary border border-secondary rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-primary mb-4">Clientes Recientes</h3>
-          <div className="space-y-3">
-            {clientes.slice(0, 3).map((cliente) => (
-              <div key={cliente.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50">
-                    <User01 className="h-4 w-4 text-brand-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-primary">{cliente.nombre}</p>
-                    <p className="text-xs text-tertiary">{cliente.ultimaVisita}</p>
-                  </div>
-                </div>
-                <Button color="tertiary" size="sm">
-                  Contactar
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-        {/* Tickets pendientes */}
-        <div className="bg-primary border border-secondary rounded-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-primary">Tickets Abiertos</h3>
-            <span className="px-2 py-1 bg-error-50 text-error-700 text-xs font-medium rounded-full">
-              {openTickets.length} pendientes
-            </span>
-          </div>
-          
-          <div className="space-y-3">
-            {openTickets.map((ticket) => (
-              <div 
-                key={ticket.id} 
-                className="p-3 bg-secondary rounded-lg hover:bg-tertiary transition-colors cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-xs font-mono text-tertiary">{ticket.id}</span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    ticket.priority === 'high' 
-                      ? 'bg-error-50 text-error-700' 
-                      : 'bg-warning-50 text-warning-700'
-                  }`}>
-                    {ticket.priority === 'high' ? 'Alta' : 'Media'}
-                  </span>
-                </div>
-                <p className="font-medium text-primary text-sm">{ticket.client}</p>
-                <p className="text-sm text-tertiary mt-1">{ticket.issue}</p>
-                <p className="text-xs text-quaternary mt-2">{ticket.time}</p>
-              </div>
-            ))}
-          </div>
-          
-          <button className="w-full mt-4 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm font-medium">
-            Ver todos los tickets
-          </button>
-        </div>
-      </div>
-
       {/* Vista semanal */}
-      <div className="bg-primary border border-secondary rounded-lg p-6">
+      <div className="bg-primary border border-secondary rounded-lg p-6 mb-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-primary">Vista Semanal</h3>
           <div className="flex items-center space-x-4 text-sm">
@@ -364,61 +279,87 @@ export default function InicioPage() {
         </div>
       </div>
 
-      {/* Acciones rápidas y actividad reciente */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-8">
+      {/* Vista de agenda y tickets */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
+        
+        {/* Clientes recientes */}
         <div className="bg-primary border border-secondary rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-primary mb-4">Acciones Rápidas</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button className="p-4 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors flex flex-col items-center">
-              <Calendar className="h-6 w-6 mb-2" />
-              <span className="text-sm font-medium">Nueva Cita</span>
-            </button>
-            <button className="p-4 bg-secondary border border-secondary rounded-lg hover:bg-tertiary transition-colors flex flex-col items-center">
-              <Users01 className="h-6 w-6 mb-2 text-primary" />
-              <span className="text-sm font-medium text-primary">Nuevo Cliente</span>
-            </button>
-            <button className="p-4 bg-secondary border border-secondary rounded-lg hover:bg-tertiary transition-colors flex flex-col items-center">
-              <FileX01 className="h-6 w-6 mb-2 text-primary" />
-              <span className="text-sm font-medium text-primary">Crear Ticket</span>
-            </button>
-            <button className="p-4 bg-secondary border border-secondary rounded-lg hover:bg-tertiary transition-colors flex flex-col items-center">
-              <CurrencyDollar className="h-6 w-6 mb-2 text-primary" />
-              <span className="text-sm font-medium text-primary">Registrar Pago</span>
-            </button>
+          <h3 className="text-lg font-semibold text-primary mb-4">Clientes Recientes</h3>
+          <div className="space-y-3">
+            {clientes.map((cliente) => (
+              <div key={cliente.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-tertiary transition-colors">
+                <div className="flex items-center space-x-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50">
+                    <User01 className="h-5 w-5 text-brand-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-primary">{cliente.nombre}</p>
+                    <p className="text-xs text-tertiary">{cliente.ultimaVisita}</p>
+                  </div>
+                </div>
+                <button className="px-3 py-1 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors">
+                  Contactar
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 
+        {/* Tickets pendientes */}
         <div className="bg-primary border border-secondary rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-primary mb-4">Actividad Reciente</h3>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-success-500 rounded-full mt-2"></div>
-              <div className="flex-1">
-                <p className="text-sm text-primary">Nueva cita programada con Juan Pérez</p>
-                <p className="text-xs text-tertiary">hace 5 minutos</p>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-primary">Tickets Abiertos</h3>
+            <span className="px-2 py-1 bg-error-50 text-error-700 text-xs font-medium rounded-full">
+              {openTickets.length} pendientes
+            </span>
+          </div>
+          
+          <div className="space-y-3">
+            {openTickets.map((ticket) => (
+              <div 
+                key={ticket.id} 
+                className="p-3 bg-secondary rounded-lg hover:bg-tertiary transition-colors cursor-pointer"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-xs font-mono text-tertiary">{ticket.id}</span>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    ticket.priority === 'high' 
+                      ? 'bg-error-50 text-error-700' 
+                      : 'bg-warning-50 text-warning-700'
+                  }`}>
+                    {ticket.priority === 'high' ? 'Alta' : 'Media'}
+                  </span>
+                </div>
+                <p className="font-medium text-primary text-sm">{ticket.client}</p>
+                <p className="text-sm text-tertiary mt-1">{ticket.issue}</p>
+                <p className="text-xs text-quaternary mt-2">{ticket.time}</p>
               </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-              <div className="flex-1">
-                <p className="text-sm text-primary">Servicio completado - María García</p>
-                <p className="text-xs text-tertiary">hace 15 minutos</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-warning-500 rounded-full mt-2"></div>
-              <div className="flex-1">
-                <p className="text-sm text-primary">Ticket #T-001 actualizado</p>
-                <p className="text-xs text-tertiary">hace 30 minutos</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-brand-500 rounded-full mt-2"></div>
-              <div className="flex-1">
-                <p className="text-sm text-primary">Pago recibido - $150</p>
-                <p className="text-xs text-tertiary">hace 1 hora</p>
-              </div>
-            </div>
+            ))}
+          </div>
+          
+          <button className="w-full mt-4 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm font-medium">
+            Ver todos los tickets
+          </button>
+        </div>
+      </div>
+
+      {/* Acciones rápidas y Clientes recientes */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
+        {/* Acciones rápidas */}
+        <div className="bg-primary border border-secondary rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Acciones Rápidas</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {accionesRapidas.map((accion) => (
+              <button
+                key={accion.id}
+                className="flex flex-col items-center justify-center p-4 bg-secondary rounded-lg hover:bg-tertiary transition-colors group"
+              >
+                <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${accion.color} mb-3 group-hover:opacity-90 transition-opacity`}>
+                  <accion.icon className="h-6 w-6 text-white" />
+                </div>
+                <span className="font-medium text-primary">{accion.nombre}</span>
+              </button>
+            ))}
           </div>
         </div>
       </div>

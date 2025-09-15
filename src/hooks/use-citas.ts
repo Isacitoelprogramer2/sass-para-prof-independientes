@@ -53,6 +53,7 @@ export function useCitas() {
             ...data,
             fechaRegistro: data.fechaRegistro?.toDate() || new Date(),
             fechaReservada: data.fechaReservada?.toDate() || new Date(),
+            pagado: data.pagado ?? false,
           } as Cita;
         });
 
@@ -97,6 +98,7 @@ export function useCitas() {
         ...citaData,
         codigoAcceso,
         fechaRegistro: new Date(),
+        pagado: (citaData as any).pagado ?? false,
       };
 
       setCitas(prev => [...prev, citaCreada].sort((a, b) => 
@@ -125,9 +127,13 @@ export function useCitas() {
     try {
       const citaRef = doc(firebaseDb, 'citas', id);
       
-      const datosParaActualizar = { ...datosActualizados };
+      const datosParaActualizar: any = { ...datosActualizados };
       if (datosParaActualizar.fechaReservada) {
         datosParaActualizar.fechaReservada = Timestamp.fromDate(datosParaActualizar.fechaReservada) as any;
+      }
+      // Asegurar que pagado se envíe como booleano si está presente
+      if (typeof datosParaActualizar.pagado !== 'undefined') {
+        datosParaActualizar.pagado = !!datosParaActualizar.pagado;
       }
 
       await updateDoc(citaRef, datosParaActualizar);
@@ -140,6 +146,33 @@ export function useCitas() {
 
     } catch (error) {
       console.error('Error al actualizar cita:', error);
+      throw error;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Marcar una cita como pagada/no pagada
+   */
+  const marcarPagado = async (id: string, valor?: boolean) => {
+    if (!firebaseAuth.currentUser) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    setSaving(true);
+
+    try {
+      // Si no se pasa valor, alternamos
+      const cita = citas.find(c => c.id === id);
+      const nuevoValor = typeof valor === 'boolean' ? valor : !cita?.pagado;
+
+      const citaRef = doc(firebaseDb, 'citas', id);
+      await updateDoc(citaRef, { pagado: nuevoValor });
+
+      setCitas(prev => prev.map(c => c.id === id ? { ...c, pagado: nuevoValor } : c));
+    } catch (error) {
+      console.error('Error al marcar pagado:', error);
       throw error;
     } finally {
       setSaving(false);
@@ -261,6 +294,7 @@ export function useCitas() {
     eliminarCita,
     obtenerCitaPorId,
     cambiarEstadoCita,
+    marcarPagado,
     
     // Métodos de filtrado
     filtrarCitasPorFecha,

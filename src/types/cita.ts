@@ -12,5 +12,6 @@ export interface Cita {
   fechaReservada: Date;
   notas?: string;
   estado: "CONFIRMADA" | "PENDIENTE" | "CANCELADA";
+  pagado?: boolean;
 }
 
