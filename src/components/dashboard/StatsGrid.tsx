@@ -98,20 +98,34 @@ export default function StatsGrid() {
 
           // intentar sumar precio recuperando servicios localmente si están embebidos
           for (const c of citasPagadas) {
-            if (c.precio) ingresos += c.precio;
-              else if (c.servicioId) {
-                try {
-                  // Obtener el documento del servicio por ID (el ID es el doc.id en Firestore)
-                  const servicioRef = firestoreDoc(firebaseDb, "servicios", String(c.servicioId));
-                  const sSnap = await getDoc(servicioRef);
-                  if (sSnap.exists()) {
-                    const precio = sSnap.data().precio;
-                    ingresos += Number(precio || 0);
-                  }
-                } catch (e) {
-                  // No bloquear el cálculo si falla la lectura de un servicio
+            // Determinar el monto a sumar para esta cita.
+            // Prioridad:
+            // 1) precio personalizado cuando precioTipo === 'PERSONALIZADO'
+            // 2) precioFinal (campo calculado o guardado)
+            // 3) campo legacy 'precio'
+            // 4) fallback: leer el precio del documento de servicio
+            let monto = 0;
+
+            if (c.precioTipo === 'PERSONALIZADO' && typeof c.precioPersonalizado !== 'undefined') {
+              monto = Number(c.precioPersonalizado || 0);
+            } else if (typeof c.precioFinal !== 'undefined') {
+              monto = Number(c.precioFinal || 0);
+            } else if (typeof c.precio !== 'undefined') {
+              monto = Number(c.precio || 0);
+            } else if (c.servicioId) {
+              try {
+                const servicioRef = firestoreDoc(firebaseDb, "servicios", String(c.servicioId));
+                const sSnap = await getDoc(servicioRef);
+                if (sSnap.exists()) {
+                  const precio = sSnap.data().precio;
+                  monto = Number(precio || 0);
                 }
+              } catch (e) {
+                // No bloquear el cálculo si falla la lectura de un servicio
               }
+            }
+
+            ingresos += isNaN(monto) ? 0 : monto;
           }
         }
       } catch (e) {

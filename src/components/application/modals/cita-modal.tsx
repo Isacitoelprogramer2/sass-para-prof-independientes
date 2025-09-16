@@ -28,6 +28,9 @@ export type CitaFormData = {
   fechaReservada: Date;
   notas?: string;
   estado: "CONFIRMADA" | "PENDIENTE" | "CANCELADA";
+  // Nuevo: manejo de tipo de precio
+  precioTipo?: 'ESTANDAR' | 'PERSONALIZADO';
+  precioPersonalizado?: number;
 };
 
 interface CitaModalProps {
@@ -101,6 +104,7 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
     clienteAmbulatorio?: { nombre?: string };
     servicioId?: string; 
     fechaReservada?: string;
+    precioPersonalizado?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -120,6 +124,8 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
       setForm(initialData);
       setSelectedClienteId(initialData.clienteId || "");
       setSelectedServicioId(initialData.servicioId || "");
+      // precio
+      setForm(prev => ({ ...prev, precioTipo: (initialData as any).precioTipo, precioPersonalizado: (initialData as any).precioPersonalizado }));
       
       // Convertir la fecha a CalendarDate para el DatePicker
       const calendarDate = new CalendarDate(
@@ -139,6 +145,7 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
         servicioId: "",
         fechaReservada: new Date(),
         estado: "PENDIENTE" as const,
+        precioTipo: 'ESTANDAR' as const,
       };
       setForm(defaultForm);
       setSelectedClienteId("");
@@ -246,6 +253,16 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
     }
   };
 
+  // Manejar cambio de tipo de precio
+  const handlePrecioTipoChange = (value: 'ESTANDAR' | 'PERSONALIZADO') => {
+    setForm(prev => ({ ...prev, precioTipo: value }));
+    // si se cambia a ESTANDAR, limpiar precio personalizado
+    if (value === 'ESTANDAR') {
+      setForm(prev => ({ ...prev, precioPersonalizado: undefined }));
+      setErrors(prev => ({ ...prev, precioPersonalizado: undefined }));
+    }
+  };
+
   /**
    * Función para manejar el envío del formulario
    */
@@ -267,6 +284,8 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
         servicioId: form.servicioId,
         fechaReservada: form.fechaReservada,
         estado: form.estado,
+        precioTipo: form.precioTipo,
+        precioPersonalizado: form.precioPersonalizado,
       };
 
       // Solo agregar campos opcionales si tienen valor y el tipo de cliente es correcto
@@ -288,6 +307,17 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
       if (form.notas?.trim()) {
         citaData.notas = form.notas.trim();
       }
+
+      // Validación: si precio personalizado está seleccionado, debe existir y ser número > 0
+      if (form.precioTipo === 'PERSONALIZADO') {
+        if (typeof form.precioPersonalizado === 'undefined' || Number.isNaN(Number(form.precioPersonalizado)) || Number(form.precioPersonalizado) <= 0) {
+          setErrors(prev => ({ ...prev, precioPersonalizado: 'Ingrese un precio válido mayor a 0' }));
+          setIsSubmitting(false);
+          return;
+        }
+        // Asegurar número
+        citaData.precioPersonalizado = Number(form.precioPersonalizado);
+      }
       
       console.log('Datos que se enviarán:', citaData); // Para debug
       
@@ -304,7 +334,7 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
     <ModalOverlay isOpen={isOpen} onOpenChange={onClose}>
       <Modal>
         <Dialog>
-          <div className="flex w-full max-w-lg flex-col bg-primary rounded-xl shadow-lg">
+          <div className="flex w-full max-w-2xl flex-col bg-primary rounded-xl shadow-lg">
             {/* Header del modal */}
             <div className="flex items-center justify-between border-b border-secondary p-6">
               <div className="flex items-center space-x-3">
@@ -331,11 +361,12 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
             {/* Contenido del modal */}
             <Form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Tipo de cliente */}
-              <div className="space-y-2">
+              <div className="space-y-2 flex flex-col gap-2">
                 <label className="text-sm font-medium text-primary">
                   Tipo de Cliente
                 </label>
                 <RadioGroup
+                  aria-label="Tipo de Cliente"
                   value={form.tipoCliente}
                   onChange={(value) => {
                     onChangeField('tipoCliente', value);
@@ -347,10 +378,14 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
                       setSelectedClienteId("");
                     }
                   }}
-                  className="flex space-x-4"
+                  className="grid grid-cols-2 gap-3 "
                 >
-                  <RadioButton value="HABITUAL" label="Cliente Habitual" />
-                  <RadioButton value="AMBULATORIO" label="Cliente Ambulatorio" />
+                  <div className="rounded-lg border border-secondary/60 p-3 has-[:checked]:ring-2 ring-primary">
+                    <RadioButton value="HABITUAL" label="Cliente Habitual" />
+                  </div>
+                  <div className="rounded-lg border border-secondary/60 p-3 has-[:checked]:ring-2 ring-primary">
+                    <RadioButton value="AMBULATORIO" label="Cliente Ambulatorio" />
+                  </div>
                 </RadioGroup>
               </div>
 
@@ -375,24 +410,29 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
                 </Select>
               )}
 
-              {/* Datos de cliente ambulatorio */}
+              {/* Datos de cliente ambulatorio (grid 2 columnas) */}
               {form.tipoCliente === "AMBULATORIO" && (
-                <div className="space-y-4">
-                  <Input
-                    label="Nombre del Cliente"
-                    value={form.clienteAmbulatorio?.nombre || ""}
-                    onChange={(value) => onChangeClienteAmbulatorio('nombre', String(value))}
-                    placeholder="Ingrese el nombre completo"
-                    isRequired
-                    isInvalid={!!errors.clienteAmbulatorio?.nombre}
-                    hint={errors.clienteAmbulatorio?.nombre}
-                  />
-                  <Input
-                    label="Teléfono (Opcional)"
-                    value={form.clienteAmbulatorio?.telefono || ""}
-                    onChange={(value) => onChangeClienteAmbulatorio('telefono', String(value))}
-                    placeholder="Número de teléfono"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Input
+                      label="Nombre del Cliente"
+                      value={form.clienteAmbulatorio?.nombre || ""}
+                      onChange={(value) => onChangeClienteAmbulatorio('nombre', String(value))}
+                      placeholder="Ingrese el nombre completo"
+                      isRequired
+                      isInvalid={!!errors.clienteAmbulatorio?.nombre}
+                      hint={errors.clienteAmbulatorio?.nombre}
+                    />
+                  </div>
+
+                  <div>
+                    <Input
+                      label="Teléfono (Opcional)"
+                      value={form.clienteAmbulatorio?.telefono || ""}
+                      onChange={(value) => onChangeClienteAmbulatorio('telefono', String(value))}
+                      placeholder="Número de teléfono"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -415,46 +455,104 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
                 ))}
               </Select>
 
-              {/* Fecha */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-primary">
-                  Fecha *
-                </label>
-                <DatePicker
-                  value={selectedDate}
-                  onChange={handleDateChange}
-                  minValue={today(getLocalTimeZone())}
-                />
+              {/* Tipo de precio: Estándar o Personalizado */}
+              <div className="space-y-2 flex flex-col gap-2">
+                <label className="text-sm font-medium text-primary">Tipo de Precio</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-secondary/60 p-3 has-[:checked]:ring-2 ring-primary">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="precioTipo"
+                        value="ESTANDAR"
+                        checked={form.precioTipo !== 'PERSONALIZADO'}
+                        onChange={() => handlePrecioTipoChange('ESTANDAR')}
+                      />
+                      <span className="text-sm">Estándar</span>
+                    </label>
+                  </div>
+                  <div className="rounded-lg border border-secondary/60 p-3 has-[:checked]:ring-2 ring-primary">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="precioTipo"
+                        value="PERSONALIZADO"
+                        checked={form.precioTipo === 'PERSONALIZADO'}
+                        onChange={() => handlePrecioTipoChange('PERSONALIZADO')}
+                      />
+                      <span className="text-sm">Personalizado</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Campo para precio personalizado */}
+              {form.precioTipo === 'PERSONALIZADO' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-primary">Precio Personalizado</label>
+                  <Input
+                    type="text"
+                    value={form.precioPersonalizado as any ?? ''}
+                    onChange={(v) => {
+                      const raw = String(v || '').trim();
+                      const num = raw === '' ? undefined : Number(raw);
+                      setForm(prev => ({ ...prev, precioPersonalizado: num }));
+                    }}
+                    placeholder="Ingrese el precio personalizado"
+                    isInvalid={!!errors.precioPersonalizado}
+                    hint={errors.precioPersonalizado}
+                  />
+                </div>
+              )}
+
+              {/* Fecha y Hora (un solo contenedor) */}
+              <div className="space-y-2 flex flex-col gap-2">
+                <label className="text-sm font-medium text-primary">Fecha y Hora *</label>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <DatePicker
+                      value={selectedDate}
+                      onChange={handleDateChange}
+                      minValue={today(getLocalTimeZone())}
+                    />
+                  </div>
+
+                  <div>
+                    <Select                      
+                      placeholder="Seleccionar hora..."
+                      isRequired
+                      isInvalid={!!errors.fechaReservada}
+                      hint={errors.fechaReservada}
+                      selectedKey={selectedTime}
+                      onSelectionChange={handleTimeSelection}
+                    >
+                      {generateTimeOptions()}
+                    </Select>
+                  </div>
+                </div>
+
                 {errors.fechaReservada && (
                   <p className="text-sm text-error-600">{errors.fechaReservada}</p>
                 )}
               </div>
-              
-              {/* Hora */}
-              <Select
-                label="Hora *"
-                placeholder="Seleccionar hora..."
-                isRequired
-                isInvalid={!!errors.fechaReservada}
-                hint={errors.fechaReservada}
-                selectedKey={selectedTime}
-                onSelectionChange={handleTimeSelection}
-              >
-                {generateTimeOptions()}
-              </Select>
 
               {/* Estado de la cita */}
-              <div className="space-y-2">
+              <div className="space-y-2 flex flex-col gap-2">
                 <label className="text-sm font-medium text-primary">
                   Estado de la Cita
                 </label>
                 <RadioGroup
                   value={form.estado}
                   onChange={(value) => onChangeField('estado', value)}
-                  className="flex space-x-4"
+                  className="grid grid-cols-2 gap-3"
                 >
-                  <RadioButton value="PENDIENTE" label="Pendiente" />
-                  <RadioButton value="CONFIRMADA" label="Confirmada" />
+                  <div className="rounded-lg border border-secondary/60 p-3 has-[:checked]:ring-2 ring-primary">
+                    <RadioButton value="PENDIENTE" label="Pendiente" />
+                  </div>
+                  <div className="rounded-lg border border-secondary/60 p-3 has-[:checked]:ring-2 ring-primary">
+                    <RadioButton value="CONFIRMADA" label="Confirmada" />
+                  </div>
                 </RadioGroup>
               </div>
 

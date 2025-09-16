@@ -10,6 +10,7 @@ import {
   BookOpen01,
   Users01,
   LifeBuoy01,
+  Ticket01,
 } from "@untitledui/icons";
 import { SidebarNavigationSimple } from "@/components/application/app-navigation/sidebar-navigation/sidebar-dashboard";
 import { AuthGuard } from "@/components/auth/auth-guard";
@@ -55,6 +56,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       label: "Clientes",
       href: "/dashboard/clientes",
       icon: Users01,
+    },
+    {
+      label: "Tickets",
+      href: "/dashboard/tickets",
+      icon: Ticket01,
     },
   ];
 

@@ -53,7 +53,11 @@ export function useCitas() {
             ...data,
             fechaRegistro: data.fechaRegistro?.toDate() || new Date(),
             fechaReservada: data.fechaReservada?.toDate() || new Date(),
-            pagado: data.pagado ?? false,
+              pagado: data.pagado ?? false,
+              // Precios: mapear campos si existen en Firestore
+              precioTipo: data.precioTipo ?? undefined,
+              precioFinal: typeof data.precioFinal === 'number' ? data.precioFinal : (data.precioFinal ? Number(data.precioFinal) : undefined),
+              precioPersonalizado: typeof data.precioPersonalizado === 'number' ? data.precioPersonalizado : (data.precioPersonalizado ? Number(data.precioPersonalizado) : undefined),
           } as Cita;
         });
 
@@ -88,9 +92,24 @@ export function useCitas() {
         codigoAcceso,
         fechaRegistro: Timestamp.fromDate(new Date()),
         fechaReservada: Timestamp.fromDate(citaData.fechaReservada),
+        // si el caller pasó info de precio, respetarla; de lo contrario, queda undefined
+        precioTipo: (citaData as any).precioTipo,
+        precioFinal: (citaData as any).precioFinal,
+        precioPersonalizado: (citaData as any).precioPersonalizado,
       };
 
-      const docRef = await addDoc(collection(firebaseDb, 'citas'), nuevaCita);
+      // Firestore no acepta valores 'undefined' en los documentos — eliminarlos antes de enviar
+      const sanitizeForFirestore = (obj: any) => {
+        const copy: any = { ...obj };
+        Object.keys(copy).forEach(key => {
+          if (typeof copy[key] === 'undefined') delete copy[key];
+        });
+        return copy;
+      };
+
+      const nuevaCitaSanitizada = sanitizeForFirestore(nuevaCita);
+
+      const docRef = await addDoc(collection(firebaseDb, 'citas'), nuevaCitaSanitizada);
       
       const citaCreada: Cita = {
         id: docRef.id,
@@ -99,6 +118,9 @@ export function useCitas() {
         codigoAcceso,
         fechaRegistro: new Date(),
         pagado: (citaData as any).pagado ?? false,
+        precioTipo: (citaData as any).precioTipo,
+        precioFinal: (citaData as any).precioFinal,
+        precioPersonalizado: (citaData as any).precioPersonalizado,
       };
 
       setCitas(prev => [...prev, citaCreada].sort((a, b) => 
@@ -135,6 +157,21 @@ export function useCitas() {
       if (typeof datosParaActualizar.pagado !== 'undefined') {
         datosParaActualizar.pagado = !!datosParaActualizar.pagado;
       }
+      // Si se actualiza precio, asegurar número
+      if (typeof datosParaActualizar.precioFinal !== 'undefined') {
+        datosParaActualizar.precioFinal = Number(datosParaActualizar.precioFinal);
+      }
+      if (typeof datosParaActualizar.precioPersonalizado !== 'undefined') {
+        datosParaActualizar.precioPersonalizado = Number(datosParaActualizar.precioPersonalizado);
+      }
+      if (typeof datosParaActualizar.precioTipo !== 'undefined') {
+        datosParaActualizar.precioTipo = datosParaActualizar.precioTipo;
+      }
+
+      // Eliminar keys con undefined antes de actualizar
+      Object.keys(datosParaActualizar).forEach(k => {
+        if (typeof datosParaActualizar[k] === 'undefined') delete datosParaActualizar[k];
+      });
 
       await updateDoc(citaRef, datosParaActualizar);
 

@@ -140,7 +140,12 @@ export const CitaDetailsModal: React.FC<Props> = ({ isOpen, onClose, cita, clien
               <h5 className="text-sm font-medium text-primary">Servicio / Precio</h5>
               <div className="mt-2 text-tertiary">
                 <p className="text-md font-semibold text-primary">{datosServicio.nombre}</p>
-                <p className="text-sm">S/{datosServicio.precio}</p>
+                <p className="text-sm">S/{
+                  // Priorizar precio personalizado si el documento cita lo tiene
+                  cita.precioTipo === 'PERSONALIZADO' && typeof cita.precioPersonalizado === 'number'
+                    ? cita.precioPersonalizado
+                    : datosServicio.precio
+                }</p>
               </div>
             </div>
           </div>

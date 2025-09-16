@@ -13,5 +13,9 @@ export interface Cita {
   notas?: string;
   estado: "CONFIRMADA" | "PENDIENTE" | "CANCELADA";
   pagado?: boolean;
+  // Nuevo: manejo de precios
+  precioTipo?: 'ESTANDAR' | 'PERSONALIZADO';
+  precioFinal?: number; // el precio que se cobrará (estándar o personalizado)
+  precioPersonalizado?: number; // sólo si precioTipo === 'PERSONALIZADO'
 }
 

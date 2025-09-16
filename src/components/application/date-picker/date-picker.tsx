@@ -17,9 +17,13 @@ interface DatePickerProps extends AriaDatePickerProps<DateValue> {
     onApply?: () => void;
     /** The function to call when the cancel button is clicked. */
     onCancel?: () => void;
+    /** Tamaño del botón trigger: 'sm' | 'md' | 'lg' | 'xl' */
+    triggerSize?: keyof typeof import("@/components/base/buttons/button").styles.sizes;
+    /** opcional: color del trigger */
+    triggerColor?: keyof typeof import("@/components/base/buttons/button").styles.colors;
 }
 
-export const DatePicker = ({ value: valueProp, defaultValue, onChange, onApply, onCancel, ...props }: DatePickerProps) => {
+export const DatePicker = ({ value: valueProp, defaultValue, onChange, onApply, onCancel, triggerSize = "md", triggerColor = "secondary", ...props }: DatePickerProps) => {
     const formatter = useDateFormatter({
         month: "short",
         day: "numeric",
@@ -32,7 +36,7 @@ export const DatePicker = ({ value: valueProp, defaultValue, onChange, onApply, 
     return (
         <AriaDatePicker shouldCloseOnSelect={false} {...props} value={value} onChange={setValue}>
             <AriaGroup>
-                <Button size="md" color="secondary" iconLeading={CalendarIcon}>
+                <Button size={triggerSize} color={triggerColor} iconLeading={CalendarIcon}>
                     {formattedDate}
                 </Button>
             </AriaGroup>
@@ -64,7 +68,7 @@ export const DatePicker = ({ value: valueProp, defaultValue, onChange, onApply, 
                                         close();
                                     }}
                                 >
-                                    Cancel
+                                    Cancelar
                                 </Button>
                                 <Button
                                     size="md"
@@ -74,7 +78,7 @@ export const DatePicker = ({ value: valueProp, defaultValue, onChange, onApply, 
                                         close();
                                     }}
                                 >
-                                    Apply
+                                    Aplicar
                                 </Button>
                             </div>
                         </>

@@ -93,7 +93,10 @@ export default function ServiciosPage() {
     const servicio = servicios.find(s => s.id === cita.servicioId);
     return {
       nombre: servicio?.nombre || 'Servicio no encontrado',
-      precio: servicio?.precio || 0
+      // Si la cita tiene precio personalizado y el tipo indica PERSONALIZADO, mostrarlo
+      precio: cita.precioTipo === 'PERSONALIZADO' && typeof cita.precioPersonalizado === 'number'
+        ? cita.precioPersonalizado
+        : (servicio?.precio || 0)
     };
   };
 
@@ -107,6 +110,8 @@ export default function ServiciosPage() {
         servicioId: datosFormulario.servicioId,
         fechaReservada: datosFormulario.fechaReservada,
         estado: datosFormulario.estado,
+        precioTipo: datosFormulario.precioTipo,
+        precioPersonalizado: datosFormulario.precioPersonalizado,
       };
 
       // Añadir campos opcionales solo si tienen valor
@@ -432,6 +437,9 @@ export default function ServiciosPage() {
           fechaReservada: citaEditando.fechaReservada,
           notas: citaEditando.notas,
           estado: citaEditando.estado
+          ,
+          precioTipo: citaEditando.precioTipo,
+          precioPersonalizado: citaEditando.precioPersonalizado
         } : undefined}
       />
     </div>
