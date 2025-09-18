@@ -71,10 +71,13 @@ export default function TicketsPage() {
   // Ahora acepta clienteContacto opcional (cuando el ticket viene de un cliente ambulatorio)
   const handleSave = async (payload: any, clienteContacto?: any) => {
     // Nota: no estamos auto-guardando clienteContacto aquí; el comportamiento queda para el caller superior
+    // Incluir clienteContacto en el payload si está presente
+    const payloadWithContacto = clienteContacto ? { ...payload, clienteContacto } : payload;
+    
     if (editing) {
-      await actualizarTicket(editing.id, payload);
+      await actualizarTicket(editing.id, payloadWithContacto);
     } else {
-      await crearTicket(payload);
+      await crearTicket(payloadWithContacto);
     }
   };
 
@@ -176,7 +179,15 @@ export default function TicketsPage() {
                 <p className="text-2xl font-semibold text-success-600 mt-1">{stats.baja}</p>
               </div>
               <div className="h-12 w-12 bg-success-50 rounded-lg flex items-center justify-center">
-                <Minus className="h-6 w-6 text-success-600" />
+                <svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M8 12L12 16M12 16L16 12M12 16V8M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                            stroke="green"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
               </div>
             </div>
           </div>
@@ -186,7 +197,9 @@ export default function TicketsPage() {
         <div className="bg-secondary border border-tertiary rounded-xl p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center gap-4">
             <div className="flex-1">
+              <p className="text-sm font-medium text-secondary mb-2">Buscar por ID o descripción</p>
               <div className="relative">
+                
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-tertiary" />
                 <input
                   type="text"
@@ -200,11 +213,11 @@ export default function TicketsPage() {
             
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex flex-col">
-                <label className="text-sm font-medium text-secondary mb-2">Prioridad</label>
+                
                 <Select
                   selectedKey={filterPrioridad || ''}
                   onSelectionChange={(key) => setFilterPrioridad(key as string)}
-                  placeholder="Todas"
+                  label="Prioridad"
                   className="min-w-[140px]"
                 >
                   <Select.Item id="" label="Todas" />
@@ -215,11 +228,11 @@ export default function TicketsPage() {
               </div>
 
               <div className="flex flex-col">
-                <label className="text-sm font-medium text-secondary mb-2">Contexto</label>
+                
                 <Select
                   selectedKey={filterContexto || ''}
                   onSelectionChange={(key) => setFilterContexto(key as string)}
-                  placeholder="Todos"
+                  label="Contexto"
                   className="min-w-[180px]"
                 >
                   <Select.Item id="" label="Todos" />

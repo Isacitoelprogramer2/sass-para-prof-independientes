@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { collection, query, where, getDocs, orderBy, getDoc, doc as firestoreDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, getDoc, doc as firestoreDoc, limit } from "firebase/firestore";
 import { firebaseDb, firebaseAuth } from "@/lib/firebase";
 import { Calendar, Activity, FileX01, CurrencyDollar } from "@untitledui/icons";
 
@@ -48,7 +48,8 @@ export default function StatsGrid() {
       const now = new Date();
       const citasQ = query(
         collection(firebaseDb, "citas"),
-        where("usuarioId", "==", user.uid)
+        where("usuarioId", "==", user.uid),
+        limit(50)
       );
       const citasSnap = await getDocs(citasQ);
       const citas = citasSnap.docs.map((d) => d.data());
@@ -69,7 +70,8 @@ export default function StatsGrid() {
       // 3) Tickets pendientes: asumir colección 'tickets' y que existe campo 'estado' distinto de 'CERRADO'
       const ticketsQ = query(
         collection(firebaseDb, "tickets"),
-        where("usuarioId", "==", user.uid)
+        where("usuarioId", "==", user.uid),
+        limit(50)
       );
       const ticketsSnap = await getDocs(ticketsQ);
       const ticketsPendientes = ticketsSnap.docs.filter((d) => {
@@ -82,7 +84,8 @@ export default function StatsGrid() {
       try {
         const pagosQ = query(
           collection(firebaseDb, "pagos"),
-          where("usuarioId", "==", user.uid)
+          where("usuarioId", "==", user.uid),
+          limit(50)
         );
         const pagosSnap = await getDocs(pagosQ);
         if (!pagosSnap.empty) {
@@ -181,9 +184,6 @@ export default function StatsGrid() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-950/30">
               <stat.icon className="h-6 w-6 text-brand-400" />
-            </div>
-            <div className={`text-sm font-medium ${stat.changeType === 'positive' ? 'text-success-700' : stat.changeType === 'negative' ? 'text-error-700' : 'text-tertiary'}`}>
-              {stat.change}
             </div>
           </div>
           <div>

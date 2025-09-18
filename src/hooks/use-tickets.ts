@@ -66,25 +66,71 @@ export function useTickets(options?: UseTicketsOptions) {
     cargar();
   }, []);
 
-  const sanitizeForFirestore = (obj: any) => {
-    const copy: any = { ...obj };
-    Object.keys(copy).forEach((k) => {
-      if (typeof copy[k] === "undefined") delete copy[k];
-    });
-    return copy;
+  const sanitizeForFirestore = (obj: any): any => {
+    if (obj === null || obj === undefined) return obj;
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => sanitizeForFirestore(item));
+    }
+    
+    if (typeof obj === 'object') {
+      const copy: any = {};
+      Object.keys(obj).forEach((k) => {
+        if (typeof obj[k] !== "undefined") {
+          copy[k] = sanitizeForFirestore(obj[k]);
+        }
+      });
+      return copy;
+    }
+    
+    return obj;
   };
 
   const crearTicket = async (payload: Omit<Ticket, "id" | "usuarioId" | "fechaIngreso">) => {
     if (!firebaseAuth.currentUser) throw new Error("Usuario no autenticado");
+    console.log("Creando ticket - Usuario autenticado:", firebaseAuth.currentUser.uid);
+    console.log("Payload recibido:", payload);
     setSaving(true);
     try {
       const docBody: any = {
         ...payload,
+        // Si asignadoA está vacío, usar el usuarioId como valor por defecto
+        ...(payload.asignadoA === "" && { asignadoA: firebaseAuth.currentUser.uid }),
         usuarioId: firebaseAuth.currentUser.uid,
         fechaIngreso: Timestamp.fromDate(new Date()),
       };
+      console.log("DocBody a enviar a Firestore:", docBody);
+      console.log("Validando campos requeridos:");
+      console.log("- titulo:", typeof docBody.titulo, docBody.titulo);
+      console.log("- descripcion:", typeof docBody.descripcion, docBody.descripcion);
+      console.log("- clienteId:", typeof docBody.clienteId, docBody.clienteId);
+      console.log("- estado:", typeof docBody.estado, docBody.estado);
+      console.log("- prioridad:", typeof docBody.prioridad, docBody.prioridad);
+      console.log("- tipoContexto:", typeof docBody.tipoContexto, docBody.tipoContexto);
+      console.log("- asignadoA:", typeof docBody.asignadoA, `"${docBody.asignadoA}"`, docBody.asignadoA === "");
+      console.log("- usuarioId:", typeof docBody.usuarioId, docBody.usuarioId);
+      
+      // Verificar si el clienteId existe y pertenece al usuario
+      try {
+        const clienteRef = doc(firebaseDb, "clientes", docBody.clienteId);
+        const clienteSnap = await getDoc(clienteRef);
+        if (clienteSnap.exists()) {
+          const clienteData = clienteSnap.data();
+          console.log("Cliente encontrado:", clienteData);
+          console.log("Cliente pertenece al usuario:", clienteData.usuarioId === docBody.usuarioId);
+        } else {
+          console.log("Cliente no encontrado");
+        }
+      } catch (e) {
+        console.log("Error verificando cliente:", e);
+      }
+      
+      if (docBody.clienteContacto) {
+        console.log("clienteContacto presente:", docBody.clienteContacto);
+      }
 
       const sanitized = sanitizeForFirestore(docBody);
+      console.log("DocBody sanitizado:", sanitized);
       const ref = await addDoc(collection(firebaseDb, "tickets"), sanitized);
 
       const created: Ticket = {

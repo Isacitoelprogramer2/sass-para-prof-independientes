@@ -101,12 +101,16 @@ export function TicketFormModal({ isOpen, onClose, onSave, initial, savedClients
         const tempClienteId = `amb-${Date.now()}`;
         basePayload.clienteId = tempClienteId;
 
-        const clienteContacto = {
+        const clienteContacto: any = {
           id: tempClienteId,
           nombre: ambNombre.trim(),
           telefono: ambTelefono.trim(),
-          email: ambEmail.trim() || undefined,
         };
+
+        // Solo incluir email si tiene valor
+        if (ambEmail.trim()) {
+          clienteContacto.email = ambEmail.trim();
+        }
 
         // Llamada extendida: payload + clienteContacto
         await onSave(basePayload, clienteContacto as any);

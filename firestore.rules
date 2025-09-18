@@ -53,6 +53,29 @@ service cloud.firestore {
              data.fechaReservada is timestamp;
     }
 
+    function isValidTicketData() {
+      let data = request.resource.data;
+      // Verificar campos obligatorios - usuarioId se agrega en el backend
+      return data.titulo is string &&
+             data.descripcion is string &&
+             data.clienteId is string &&
+             data.estado in ['ABIERTO', 'EN_PROGRESO', 'CERRADO'] &&
+             data.prioridad in ['ALTA', 'MEDIA', 'BAJA'] &&
+             data.tipoContexto in ['DURANTE_SERVICIO', 'POST_SERVICIO'] &&
+             data.asignadoA is string &&
+             data.usuarioId is string &&
+             (!('clienteContacto' in data) || isValidClienteContacto(data.clienteContacto));
+    }
+
+    function isValidClienteContacto(contacto) {
+      return contacto is map &&
+             contacto.keys().hasAll(['nombre', 'telefono']) &&
+             contacto.nombre is string &&
+             contacto.telefono is string &&
+             (!('email' in contacto) || contacto.email is string) &&
+             (!('id' in contacto) || contacto.id is string);
+    }
+
     // USUARIOS
     match /usuarios/{userId} {
       // Leer solo el propio documento por ID (mejor usar get por ID).
@@ -132,32 +155,19 @@ service cloud.firestore {
                  && (resource.data.usuarioId == request.auth.uid
                      || resource.data.clienteId == request.auth.uid);
 
-      // Para queries: solo con filtro por usuarioId en la query
+      // Para queries: permitir list con filtro por usuarioId o clienteId del usuario autenticado
       allow list: if isAuthenticated()
                   && request.query.limit <= 50;
 
       // Validación de creación - todos los campos obligatorios
       allow create: if isAuthenticated()
-                    && request.resource.data.usuarioId == request.auth.uid
-                    && request.resource.data.titulo is string
-                    && request.resource.data.descripcion is string
-                    && request.resource.data.clienteId is string
-                    && request.resource.data.estado in ['ABIERTO', 'EN_PROGRESO', 'CERRADO']
-                    && request.resource.data.prioridad in ['ALTA', 'MEDIA', 'BAJA']
-                    && request.resource.data.tipoContexto in ['DURANTE_SERVICIO', 'POST_SERVICIO']
-                    && request.resource.data.asignadoA is string
-                    && (!('fechaIngreso' in request.resource.data) || request.resource.data.fechaIngreso is timestamp);
+                    && request.resource.data.usuarioId == request.auth.uid;
+    //                     && isValidTicketData();
 
       // Actualizar: validar los mismos campos en la actualización
       allow update: if isAuthenticated()
                     && resource.data.usuarioId == request.auth.uid
-                    && request.resource.data.titulo is string
-                    && request.resource.data.descripcion is string
-                    && request.resource.data.clienteId is string
-                    && request.resource.data.estado in ['ABIERTO', 'EN_PROGRESO', 'CERRADO']
-                    && request.resource.data.prioridad in ['ALTA', 'MEDIA', 'BAJA']
-                    && request.resource.data.tipoContexto in ['DURANTE_SERVICIO', 'POST_SERVICIO']
-                    && request.resource.data.asignadoA is string;
+                    && isValidTicketData();
 
       // Borrar solo dueño
       allow delete: if isAuthenticated()

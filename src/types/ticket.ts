@@ -8,4 +8,10 @@ export interface Ticket {
   fechaIngreso: Date;
   descripcion: string;
   tipoContexto: "DURANTE_SERVICIO" | "POST_SERVICIO";
+  // Datos de contacto para clientes ambulatorios
+  clienteContacto?: {
+    nombre: string;
+    telefono: string;
+    email?: string;
+  };
 }
