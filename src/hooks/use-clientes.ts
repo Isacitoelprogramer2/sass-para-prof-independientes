@@ -10,7 +10,8 @@ import {
   getDoc, 
   addDoc, 
   updateDoc, 
-  deleteDoc
+  deleteDoc,
+  limit
 } from 'firebase/firestore';
 import { firebaseDb, firebaseAuth } from '@/lib/firebase';
 import { Cliente } from '@/types/cliente';
@@ -39,7 +40,8 @@ export function useClientes() {
         // Consulta para obtener clientes del usuario actual
         const clientesQuery = query(
           collection(firebaseDb, 'clientes'),
-          where('usuarioId', '==', firebaseAuth.currentUser.uid)
+          where('usuarioId', '==', firebaseAuth.currentUser.uid),
+          limit(100)
         );
 
         const querySnapshot = await getDocs(clientesQuery);

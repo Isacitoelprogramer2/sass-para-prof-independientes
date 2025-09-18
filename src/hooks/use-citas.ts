@@ -12,6 +12,7 @@ import {
   updateDoc, 
   deleteDoc,
   orderBy,
+  limit,
   Timestamp
 } from 'firebase/firestore';
 import { firebaseDb, firebaseAuth } from '@/lib/firebase';
@@ -42,7 +43,8 @@ export function useCitas() {
         const citasQuery = query(
           collection(firebaseDb, 'citas'),
           where('usuarioId', '==', firebaseAuth.currentUser.uid),
-          orderBy('fechaReservada', 'asc')
+          orderBy('fechaReservada', 'asc'),
+          limit(50)
         );
 
         const querySnapshot = await getDocs(citasQuery);

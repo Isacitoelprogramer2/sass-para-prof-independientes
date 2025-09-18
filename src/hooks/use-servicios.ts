@@ -10,7 +10,8 @@ import {
   getDoc, 
   addDoc, 
   updateDoc, 
-  deleteDoc
+  deleteDoc,
+  limit
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { firebaseDb, firebaseStorage, firebaseAuth } from '@/lib/firebase';
@@ -40,7 +41,8 @@ export function useServicios() {
         // Consulta simple sin orderBy para evitar índice compuesto
         const serviciosQuery = query(
           collection(firebaseDb, 'servicios'),
-          where('usuarioId', '==', firebaseAuth.currentUser.uid)
+          where('usuarioId', '==', firebaseAuth.currentUser.uid),
+          limit(100)
         );
 
         const querySnapshot = await getDocs(serviciosQuery);

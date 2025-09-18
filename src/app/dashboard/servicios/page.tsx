@@ -10,6 +10,7 @@ import { useServicios } from "@/hooks/use-servicios";
 import { CitaModal, CitaFormData } from "@/components/application/modals/cita-modal";
 import CitaDetailsModal from "@/components/application/modals/cita-details-modal";
 import { Cita } from "@/types/cita";
+import { useRouter } from "next/navigation";
 
 // Tipos para filtros
 type FiltroFecha = 'todas' | 'hoy' | 'semana' | 'mes';
@@ -22,6 +23,8 @@ export default function ServiciosPage() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [citaEditando, setCitaEditando] = useState<Cita | null>(null);
   const [selectedCita, setSelectedCita] = useState<Cita | null>(null);
+
+  const router = useRouter();
 
   // Hooks para gestión de datos
   const { 
@@ -37,6 +40,11 @@ export default function ServiciosPage() {
   
   const { clientes } = useClientes();
   const { servicios } = useServicios();
+
+  // Función para navegar a los detalles de la cita
+  const handleCitaClick = (citaId: string) => {
+    router.push(`/dashboard/servicios/servicio-details?id=${citaId}`);
+  };
 
   /**
    * Función para obtener los servicios filtrados según los criterios seleccionados
@@ -320,7 +328,7 @@ export default function ServiciosPage() {
               const datosServicio = obtenerDatosServicio(cita);
 
               return (
-                <div key={cita.id} className="p-6 hover:bg-secondary transition-colors" onClick={() => setSelectedCita(cita)}>
+                <div key={cita.id} className="p-6 hover:bg-secondary transition-colors cursor-pointer" onClick={() => handleCitaClick(cita.id)}>
                   <div className="flex items-center justify-between">
                     {/* Información del cliente y servicio */}
                     <div className="flex items-start space-x-4">
@@ -343,33 +351,36 @@ export default function ServiciosPage() {
                             <span>{formatearHora(cita.fechaReservada)}</span>
                           </div>
                           <span>•</span>
-                          <span>S/{datosServicio.precio}</span>
-                          {/* Si hay notas, las muestra */}
-                          {cita.notas && (
-                            <>
-                              <span>•</span>
-                              <span className="italic">{cita.notas}</span>
-                            </>
-                          )}
+                          <span>S/{datosServicio.precio}</span>            
                         </div>
+
+                        {/* Etiqueta de estado con color dinámico */}
+                            <div className="flex items-center space-x-2 mt-3">
+                            <span
+                              className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${getEstadoColor(
+                              cita?.estado ?? ""
+                              )}`}
+                            >
+                              {(cita?.estado ?? "")
+                              ? cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1).toLowerCase()
+                              : "Sin estado"}
+                            </span>
+                            {/* Estado de pago */}
+                            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${cita?.pagado ? 'bg-success-900 text-success-100 border-success-800' : 'bg-warning-900 text-warning-100 border-warning-800'}`}>
+                              {cita?.pagado ? '$ Pagado' : 'Pendiente de pago'}
+                            </span>
+                            </div>
+
+                          {cita.notas && (
+                            <div className="mt-2 max-w-md max-h-16 overflow-hidden">
+                              <p className="text-sm text-quaternary italic">Notas: {cita.notas}</p>
+                            </div>
+                          )}
                       </div>
                     </div>
                     {/* Acciones y estado de la cita */}
                     <div className="flex items-center space-x-3">
-                      {/* Etiqueta de estado con color dinámico */}
-                      <div className="flex items-center space-x-2">
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${getEstadoColor(
-                            cita.estado
-                          )}`}
-                        >
-                          {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1).toLowerCase()}
-                        </span>
-                        {/* Estado de pago */}
-                        <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${cita.pagado ? 'bg-success-50 text-success-700 border-success-200' : 'bg-warning-50 text-warning-700 border-warning-200'}`}>
-                          {cita.pagado ? 'Pagado' : 'Pendiente de pago'}
-                        </span>
-                      </div>
+                      
                       <div className="flex space-x-2">
                         {/* Botón para aceptar la cita si está pendiente */}
                         {cita.estado === 'PENDIENTE' && (

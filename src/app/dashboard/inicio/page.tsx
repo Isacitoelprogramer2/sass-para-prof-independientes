@@ -1,26 +1,81 @@
 "use client";
 
-import { 
-  Users01, 
+import {  
   Calendar, 
   CurrencyDollar,
   Bell01,
   Clock,
   AlertCircle,
-  CheckCircle,
-  ArrowRight,
-  Activity,
   X,
   FileX01,
   User01,
   Plus
 } from "@untitledui/icons";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import StatsGrid from '@/components/dashboard/StatsGrid';
+import { useCitas } from '@/hooks/use-citas';
+import { useClientes } from '@/hooks/use-clientes';
+import { useServicios } from '@/hooks/use-servicios';
+import DayAppointmentsModal from '@/components/application/modals/DayAppointmentsModal';
 
 export default function InicioPage() {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [showDayModal, setShowDayModal] = useState(false);
+  const { citas, loading: citasLoading } = useCitas();
+  const { clientes } = useClientes();
+  const { servicios } = useServicios();
   
+  // Función para manejar el click en un día
+  const handleDayClick = (day: typeof weekSchedule[0]) => {
+    // Calcular la fecha completa del día seleccionado
+    const today = new Date();
+    const currentDay = today.getDay();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
+    const selectedDate = new Date(monday);
+    selectedDate.setDate(monday.getDate() + weekSchedule.indexOf(day));
+    
+    setSelectedDay(selectedDate);
+    setShowDayModal(true);
+  };
+  
+  // Calcular la semana actual y contar citas por día
+  const weekSchedule = useMemo(() => {
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 = Domingo, 1 = Lunes, etc.
+    
+    // Calcular el lunes de la semana actual
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
+    
+    const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sáb'];
+    const weekDays = [];
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      
+      // Contar citas para este día
+      const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+      
+      const appointmentsCount = citas.filter(cita => {
+        const citaDate = new Date(cita.fechaReservada);
+        return citaDate >= dayStart && citaDate <= dayEnd;
+      }).length;
+      
+      weekDays.push({
+        day: days[date.getDay()],
+        date: date.getDate().toString(),
+        appointments: appointmentsCount,
+        available: Math.max(0, 10 - appointmentsCount), // Asumiendo capacidad máxima de 10 citas por día
+        isToday: date.toDateString() === today.toDateString()
+      });
+    }
+    
+    return weekDays;
+  }, [citas]);
 
   const todaySchedule = [
     { time: "09:00", client: "Ana Martínez", service: "Consulta médica", status: "confirmed" },
@@ -28,15 +83,6 @@ export default function InicioPage() {
     { time: "11:30", client: "Pedro Ruiz", service: "Masaje terapéutico", status: "in-progress" },
     { time: "14:30", client: "Carlos López", service: "Consulta", status: "confirmed" },
     { time: "16:00", client: "Laura Díaz", service: "Tratamiento facial", status: "pending" },
-  ];
-
-  const weekSchedule = [
-    { day: "Lun", date: "9", appointments: 8, available: 2 },
-    { day: "Mar", date: "10", appointments: 6, available: 4 },
-    { day: "Mie", date: "11", appointments: 9, available: 1 },
-    { day: "Jue", date: "12", appointments: 5, available: 5 },
-    { day: "Vie", date: "13", appointments: 10, available: 0 },
-    { day: "Sáb", date: "14", appointments: 4, available: 6 },
   ];
 
   const notifications = [
@@ -80,7 +126,7 @@ export default function InicioPage() {
     { id: "T-003", client: "Miguel Ángel", issue: "Problema con pago", priority: "high", time: "hace 1d" },
   ];
 
-  const clientes = [
+  const clientesData = [
     { id: 1, nombre: "Ana Martínez", ultimaVisita: "Hace 2 días" },
     { id: 2, nombre: "Carlos López", ultimaVisita: "Hace 1 semana" },
     { id: 3, nombre: "María García", ultimaVisita: "Hace 3 días" },
@@ -92,24 +138,6 @@ export default function InicioPage() {
     { id: 3, nombre: "Nuevo Ticket", icon: FileX01, color: "bg-purple-500" },
     { id: 4, nombre: "Nuevo Servicio", icon: Plus, color: "bg-orange-500" },
   ];
-
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'confirmed': return 'text-success-700 bg-success-50';
-      case 'in-progress': return 'text-blue-700 bg-blue-50';
-      case 'pending': return 'text-warning-700 bg-warning-50';
-      default: return 'text-gray-700 bg-gray-50';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch(status) {
-      case 'confirmed': return 'Confirmada';
-      case 'in-progress': return 'En curso';
-      case 'pending': return 'Pendiente';
-      default: return status;
-    }
-  };
 
   return (
     <div className="p-6 lg:p-8">
@@ -194,35 +222,31 @@ export default function InicioPage() {
           <h3 className="text-lg font-semibold text-primary">Vista Semanal</h3>
           <div className="flex items-center space-x-4 text-sm">
             <div className="flex items-center">
-              <div className="w-3 h-3 bg-brand-600 rounded-full mr-2"></div>
+              <div className="w-3 h-3 bg-brand-400 rounded-full mr-2"></div>
               <span className="text-tertiary">Citas agendadas</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-success-500 rounded-full mr-2"></div>
-              <span className="text-tertiary">Espacios disponibles</span>
             </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-6 gap-4">
+        <div className="grid grid-cols-7 gap-4">
           {weekSchedule.map((day, idx) => (
             <div 
               key={idx} 
-              className={`text-center p-4 rounded-lg border ${
-                idx === 0 ? 'border-brand-600 bg-brand-50' : 'border-secondary bg-secondary'
+              className={`text-center p-4 rounded-lg border cursor-pointer transition-colors ${
+                day.isToday ? 'border-brand-600 bg-brand-500/20 hover:bg-brand-500/30' : 'border-secondary bg-secondary hover:bg-tertiary'
               }`}
+              onClick={() => handleDayClick(day)}
             >
               <p className="text-xs font-medium text-tertiary mb-1">{day.day}</p>
               <p className="text-2xl font-semibold text-primary mb-3">{day.date}</p>
               <div className="space-y-2">
                 <div className="flex items-center justify-center space-x-1">
-                  <Calendar className="h-3 w-3 text-brand-600" />
-                  <span className="text-sm font-medium text-brand-600">{day.appointments}</span>
+                  <Calendar className="h-3 w-3 text-brand-400" />
+                  <span className="text-sm font-medium text-brand-400">
+                    {citasLoading ? '...' : day.appointments}
+                  </span>
                 </div>
-                <div className="flex items-center justify-center space-x-1">
-                  <CheckCircle className="h-3 w-3 text-success-600" />
-                  <span className="text-sm font-medium text-success-600">{day.available}</span>
-                </div>
+                
               </div>
             </div>
           ))}
@@ -236,7 +260,7 @@ export default function InicioPage() {
         <div className="bg-primary border border-secondary rounded-lg p-6">
           <h3 className="text-lg font-semibold text-primary mb-4">Clientes Recientes</h3>
           <div className="space-y-3">
-            {clientes.map((cliente) => (
+            {clientesData.map((cliente) => (
               <div key={cliente.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg hover:bg-tertiary transition-colors">
                 <div className="flex items-center space-x-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50">
@@ -293,7 +317,14 @@ export default function InicioPage() {
         </div>
       </div>
 
-      
+      {/* Modal de citas del día */}
+      <DayAppointmentsModal
+        isOpen={showDayModal}
+        onOpenChange={setShowDayModal}
+        selectedDay={selectedDay}
+        citas={citas}
+      />
+
     </div>
   );
 }
