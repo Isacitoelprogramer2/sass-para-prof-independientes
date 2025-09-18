@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import { useTickets } from "@/hooks/use-tickets";
+import { useClientes } from "@/hooks/use-clientes";
 import { Ticket } from "@/types/ticket";
 import { TicketDetailModal } from "@/components/application/modals/ticket-detail-modal";
 import { TicketFormModal } from "@/components/application/modals/ticket-form-modal";
@@ -22,6 +23,13 @@ function useDebounced(value: string, delay = 400) {
 
 export default function TicketsPage() {
   const { tickets, loading, error, crearTicket, actualizarTicket, eliminarTicket } = useTickets();
+
+  // Obtener lista de clientes para usar como "savedClients" en el modal de tickets
+  const { clientes: clientesParaSelect } = useClientes();
+
+  const savedClients = useMemo(() => {
+    return clientesParaSelect.map((c) => ({ id: c.id, nombre: c.datos.nombre }));
+  }, [clientesParaSelect]);
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 400);
@@ -60,7 +68,9 @@ export default function TicketsPage() {
   const openDetail = (t: Ticket) => { setSelected(t); setDetailOpen(true); };
   const openConfirm = (t: Ticket) => { setToDelete(t); setConfirmOpen(true); };
 
-  const handleSave = async (payload: any) => {
+  // Ahora acepta clienteContacto opcional (cuando el ticket viene de un cliente ambulatorio)
+  const handleSave = async (payload: any, clienteContacto?: any) => {
+    // Nota: no estamos auto-guardando clienteContacto aquí; el comportamiento queda para el caller superior
     if (editing) {
       await actualizarTicket(editing.id, payload);
     } else {
@@ -317,7 +327,13 @@ export default function TicketsPage() {
       </div>
 
       <TicketDetailModal isOpen={detailOpen} onClose={() => setDetailOpen(false)} ticket={selected} />
-      <TicketFormModal isOpen={formOpen} onClose={() => setFormOpen(false)} onSave={handleSave} initial={editing || undefined} />
+      <TicketFormModal
+        isOpen={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSave={handleSave}
+        initial={editing || undefined}
+        savedClients={savedClients}
+      />
       <ConfirmDeleteModal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleDelete} />
     </div>
   );

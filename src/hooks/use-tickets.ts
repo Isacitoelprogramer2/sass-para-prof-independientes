@@ -12,6 +12,7 @@ import {
   updateDoc,
   deleteDoc,
   orderBy,
+  limit,
   Timestamp,
 } from "firebase/firestore";
 import { firebaseDb, firebaseAuth } from "@/lib/firebase";
@@ -39,7 +40,8 @@ export function useTickets(options?: UseTicketsOptions) {
         const ticketsQuery = query(
           collection(firebaseDb, "tickets"),
           where("usuarioId", "==", firebaseAuth.currentUser.uid),
-          orderBy(options?.orderByField || "fechaIngreso", "desc") as any
+          orderBy(options?.orderByField || "fechaIngreso", "desc") as any,
+          limit(50)
         );
 
         const snap = await getDocs(ticketsQuery);

@@ -91,6 +91,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "tickets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "usuarioId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fechaIngreso",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

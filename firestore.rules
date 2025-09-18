@@ -2,18 +2,16 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Función helper para verificar si el usuario está autenticado
+
+    // Helpers
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    // Función helper para verificar si el usuario es el propietario del documento
+
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
-    
-    // Función helper para verificar datos requeridos del usuario
+
     function isValidUserData() {
       let data = request.resource.data;
       return data.keys().hasAll(['datosProfesional', 'datosNegocio', 'datosCuenta']) &&
@@ -23,8 +21,7 @@ service cloud.firestore {
              data.datosCuenta.keys().hasAll(['plan']) &&
              data.datosCuenta.plan in ['BASICO', 'PREMIUM'];
     }
-    
-    // Función helper para verificar datos válidos de servicio
+
     function isValidServiceData() {
       let data = request.resource.data;
       return data.keys().hasAll(['nombre', 'tipo', 'precio', 'usuarioId']) &&
@@ -33,8 +30,7 @@ service cloud.firestore {
              data.tipo is string &&
              data.usuarioId is string;
     }
-    
-    // Función helper para verificar datos válidos de cliente
+
     function isValidClientData() {
       let data = request.resource.data;
       return data.keys().hasAll(['tipo', 'datos', 'usuarioId']) &&
@@ -45,120 +41,158 @@ service cloud.firestore {
              data.datos.telefono is string &&
              data.usuarioId is string;
     }
-    
-    // Función helper para verificar datos válidos de cita
+
     function isValidCitaData() {
       let data = request.resource.data;
       return data.keys().hasAll(['servicioId', 'usuarioId', 'fechaReservada', 'estado']) &&
-             ((data.keys().hasAll(['clienteId']) && data.clienteId is string) ||
-              (data.keys().hasAll(['clienteAmbulatorio']) && data.clienteAmbulatorio.nombre is string)) &&
+             (
+               (data.keys().hasAll(['clienteId']) && data.clienteId is string) ||
+               (data.keys().hasAll(['clienteAmbulatorio']) && data.clienteAmbulatorio.nombre is string)
+             ) &&
              data.estado in ['PENDIENTE', 'CONFIRMADA', 'COMPLETADA', 'CANCELADA'] &&
              data.fechaReservada is timestamp;
     }
 
-    // Reglas para usuarios
+    // USUARIOS
     match /usuarios/{userId} {
-      // Permitir lectura y escritura solo al propietario del documento
-      allow read, write: if isAuthenticated() && isOwner(userId);
-      
-      // Validar datos al crear/actualizar
-      allow create: if isAuthenticated() && isOwner(userId) && isValidUserData();
-      allow update: if isAuthenticated() && isOwner(userId) && isValidUserData();
+      // Leer solo el propio documento por ID (mejor usar get por ID).
+      allow get: if isOwner(userId);
+      // Evitar list para no tener que usar documentId() == uid (opcional).
+      allow list: if false;
+
+      allow create: if isOwner(userId) && isValidUserData();
+      allow update: if isOwner(userId) && isValidUserData();
+      allow delete: if isOwner(userId);
     }
-    
-    // Reglas para servicios
+
+    // SERVICIOS
     match /servicios/{servicioId} {
-      // Permitir lectura a todos los usuarios autenticados (para ver catálogos)
-      allow read: if isAuthenticated();
-      
-      // Permitir todas las operaciones al propietario del servicio
-      allow read, write, create, update, delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
-      
-      // Permitir creación si es el propietario y los datos son válidos
-      allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) && isValidServiceData();
-      
-      // Permitir actualización si es el propietario y los datos son válidos
-      allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidServiceData();
-      
-      // Permitir eliminación si es el propietario
-      allow delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      // Catálogo: cualquier autenticado puede leer (get y list).
+      allow get, list: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+                    && isOwner(request.resource.data.usuarioId)
+                    && isValidServiceData();
+
+      allow update: if isAuthenticated()
+                    && isOwner(resource.data.usuarioId)
+                    && isValidServiceData();
+
+      allow delete: if isAuthenticated()
+                    && isOwner(resource.data.usuarioId);
     }
-    
-    // Reglas para clientes
+
+    // CLIENTES
     match /clientes/{clienteId} {
-      // Solo el propietario puede leer y escribir sus clientes
-      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
-      
-      // Permitir creación si es el propietario y los datos son válidos
-      allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) && isValidClientData();
-      
-      // Permitir actualización si es el propietario y los datos son válidos
-      allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidClientData();
-      
-      // Permitir eliminación si es el propietario
-      allow delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      // El propietario puede leer (para list, la query debe filtrar por usuarioId == uid)
+      allow get, list: if isAuthenticated() && resource.data.usuarioId == request.auth.uid;
+
+      allow create: if isAuthenticated()
+                    && request.resource.data.usuarioId == request.auth.uid
+                    && isValidClientData();
+
+      allow update: if isAuthenticated()
+                    && resource.data.usuarioId == request.auth.uid
+                    && isValidClientData();
+
+      allow delete: if isAuthenticated()
+                    && resource.data.usuarioId == request.auth.uid;
     }
-    
-    // Reglas para citas
+
+    // CITAS
     match /citas/{citaId} {
-      // El propietario puede leer y escribir sus citas
-      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
-      
-      // El cliente puede leer sus propias citas
-      allow read: if isAuthenticated() && request.auth.uid == resource.data.clienteId;
-      
-      // Validar datos al crear/actualizar
-      allow create: if isAuthenticated() && 
-                       (isOwner(request.resource.data.usuarioId) || request.auth.uid == request.resource.data.clienteId) && 
-                       isValidCitaData();
-      allow update: if isAuthenticated() && isOwner(resource.data.usuarioId) && isValidCitaData();
+      // Lectura: dueño de la cita (usuarioId) o el cliente (clienteId)
+      allow get: if isAuthenticated()
+                 && (resource.data.usuarioId == request.auth.uid
+                     || resource.data.clienteId == request.auth.uid);
+
+      // Para list, la query debe garantizar uno de los dos filtros; limit para control
+      allow list: if isAuthenticated()
+                  && request.query.limit <= 50
+                  && (resource.data.usuarioId == request.auth.uid
+                      || resource.data.clienteId == request.auth.uid);
+
+      allow create: if isAuthenticated()
+                    && (request.resource.data.usuarioId == request.auth.uid
+                        || request.resource.data.clienteId == request.auth.uid)
+                    && isValidCitaData();
+
+      allow update: if isAuthenticated()
+                    && resource.data.usuarioId == request.auth.uid
+                    && isValidCitaData();
+
+      allow delete: if isAuthenticated()
+                    && resource.data.usuarioId == request.auth.uid;
     }
 
-    // Reglas para tickets (soporte/servicios)
+    // TICKETS (soporte/servicios)
     match /tickets/{ticketId} {
-      // Solo el propietario (usuarioId) puede leer y escribir sus tickets
-      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      // Lectura: dueño del ticket (usuarioId) o el cliente asignado (clienteId)
+      allow get: if isAuthenticated()
+                 && (resource.data.usuarioId == request.auth.uid
+                     || resource.data.clienteId == request.auth.uid);
 
-      // Permitir lectura por parte del cliente asociado (si existe clienteId)
-      allow read: if isAuthenticated() && request.auth.uid == resource.data.clienteId;
+      // Para queries: solo con filtro por usuarioId en la query
+      allow list: if isAuthenticated()
+                  && request.query.limit <= 50;
 
-      // Validación básica al crear
-      allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) &&
-                    request.resource.data.keys().hasAll(['descripcion', 'fechaIngreso', 'tipoUrgencia', 'usuarioId']) &&
-                    request.resource.data.tipoUrgencia in ['ALTA', 'MEDIA', 'BAJA'];
+      // Validación de creación - todos los campos obligatorios
+      allow create: if isAuthenticated()
+                    && request.resource.data.usuarioId == request.auth.uid
+                    && request.resource.data.titulo is string
+                    && request.resource.data.descripcion is string
+                    && request.resource.data.clienteId is string
+                    && request.resource.data.estado in ['ABIERTO', 'EN_PROGRESO', 'CERRADO']
+                    && request.resource.data.prioridad in ['ALTA', 'MEDIA', 'BAJA']
+                    && request.resource.data.tipoContexto in ['DURANTE_SERVICIO', 'POST_SERVICIO']
+                    && request.resource.data.asignadoA is string
+                    && (!('fechaIngreso' in request.resource.data) || request.resource.data.fechaIngreso is timestamp);
 
-      // Actualizaciones y borrado solo por propietario
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      // Actualizar: validar los mismos campos en la actualización
+      allow update: if isAuthenticated()
+                    && resource.data.usuarioId == request.auth.uid
+                    && request.resource.data.titulo is string
+                    && request.resource.data.descripcion is string
+                    && request.resource.data.clienteId is string
+                    && request.resource.data.estado in ['ABIERTO', 'EN_PROGRESO', 'CERRADO']
+                    && request.resource.data.prioridad in ['ALTA', 'MEDIA', 'BAJA']
+                    && request.resource.data.tipoContexto in ['DURANTE_SERVICIO', 'POST_SERVICIO']
+                    && request.resource.data.asignadoA is string;
+
+      // Borrar solo dueño
+      allow delete: if isAuthenticated()
+                    && resource.data.usuarioId == request.auth.uid;
     }
 
-    // Reglas para pagos
+    // PAGOS
     match /pagos/{pagoId} {
-      // Solo el propietario puede ver y gestionar sus pagos
-      allow read, write: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      allow get, list: if isAuthenticated() && resource.data.usuarioId == request.auth.uid;
 
-      // Permitir creación si el payload contiene monto y usuarioId válidos
-      allow create: if isAuthenticated() && isOwner(request.resource.data.usuarioId) &&
-                    request.resource.data.keys().hasAll(['monto', 'usuarioId', 'fecha']) &&
-                    request.resource.data.monto is number;
+      allow create: if isAuthenticated()
+                    && request.resource.data.usuarioId == request.auth.uid
+                    && request.resource.data.keys().hasAll(['monto','usuarioId','fecha'])
+                    && request.resource.data.monto is number
+                    && request.resource.data.fecha is timestamp;
 
-      // Actualización/ eliminación solo por propietario
-      allow update, delete: if isAuthenticated() && isOwner(resource.data.usuarioId);
+      allow update, delete: if isAuthenticated()
+                            && resource.data.usuarioId == request.auth.uid;
     }
-    
-    // Reglas para archivos de usuario (fotos de perfil, portadas, etc.)
+
+    // Archivos de usuario (metadata en Firestore)
     match /usuario-files/{userId}/{allPaths=**} {
-      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
-    
-    // Reglas para archivos públicos (pueden ser leídos por cualquiera)
+
+    // Archivos públicos (metadata en Firestore)
     match /public-files/{allPaths=**} {
       allow read: if true;
       allow write: if isAuthenticated();
     }
-    
+
     // Denegar todo lo demás
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
+
