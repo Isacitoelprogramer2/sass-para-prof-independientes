@@ -53,6 +53,19 @@ service cloud.firestore {
              data.fechaReservada is timestamp;
     }
 
+    function isValidNotificacionData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['usuarioId', 'type', 'title', 'message', 'time', 'unread', 'createdAt']) &&
+             data.type in ['appointment', 'reminder', 'ticket', 'payment'] &&
+             data.title is string &&
+             data.message is string &&
+             data.time is string &&
+             data.unread is bool &&
+             data.createdAt is timestamp &&
+             (!('citaId' in data) || data.citaId is string) &&
+             (!('ticketId' in data) || data.ticketId is string);
+    }
+
 
     function isValidClienteContacto(contacto) {
       return contacto is map &&
@@ -180,6 +193,22 @@ service cloud.firestore {
     match /public-files/{allPaths=**} {
       allow read: if true;
       allow write: if isAuthenticated();
+    }
+
+    // NOTIFICACIONES
+    match /notificaciones/{notificacionId} {
+      allow get, list: if isAuthenticated() && resource.data.usuarioId == request.auth.uid;
+
+      allow create: if isAuthenticated()
+                    && isOwner(request.resource.data.usuarioId)
+                    && isValidNotificacionData();
+
+      allow update: if isAuthenticated()
+                    && isOwner(resource.data.usuarioId)
+                    && isValidNotificacionData();
+
+      allow delete: if isAuthenticated()
+                    && isOwner(resource.data.usuarioId);
     }
 
     // Denegar todo lo demás

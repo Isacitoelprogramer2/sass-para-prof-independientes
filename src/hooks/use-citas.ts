@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { firebaseDb, firebaseAuth } from '@/lib/firebase';
 import { Cita } from '@/types/cita';
+import { crearNotificacion } from '@/utils/notificaciones';
 
 /**
  * Hook personalizado para gestionar citas en Firebase
@@ -64,6 +65,37 @@ export function useCitas() {
         });
 
         setCitas(citasData);
+
+        // Crear recordatorios para citas próximas
+        const ahora = new Date();
+        const en30Minutos = new Date(ahora.getTime() + 30 * 60 * 1000);
+
+        const citasProximas = citasData.filter(cita => {
+          const citaTime = cita.fechaReservada.getTime();
+          return citaTime > ahora.getTime() && citaTime <= en30Minutos.getTime() && cita.estado === 'CONFIRMADA';
+        });
+
+        for (const cita of citasProximas) {
+          // Verificar si ya existe un recordatorio para esta cita
+          const recordatoriosQuery = query(
+            collection(firebaseDb, 'notificaciones'),
+            where('usuarioId', '==', firebaseAuth.currentUser.uid),
+            where('citaId', '==', cita.id),
+            where('type', '==', 'reminder')
+          );
+
+          const recordatoriosSnapshot = await getDocs(recordatoriosQuery);
+          if (recordatoriosSnapshot.empty) {
+            // Crear recordatorio
+            const tiempoRestante = Math.round((cita.fechaReservada.getTime() - ahora.getTime()) / (1000 * 60));
+            await crearNotificacion(
+              'reminder',
+              'Recordatorio de cita',
+              `Tienes una cita en ${tiempoRestante} minutos`,
+              cita.id
+            );
+          }
+        }
       } catch (error) {
         console.error('Error al cargar citas:', error);
       } finally {
@@ -129,6 +161,37 @@ export function useCitas() {
         a.fechaReservada.getTime() - b.fechaReservada.getTime()
       ));
 
+      // Crear notificación de nueva cita
+      let nombreCliente = 'Cliente';
+      if (citaData.clienteId) {
+        // Buscar nombre del cliente habitual
+        try {
+          const clienteDoc = await getDoc(doc(firebaseDb, 'clientes', citaData.clienteId));
+          if (clienteDoc.exists()) {
+            nombreCliente = clienteDoc.data().datos.nombre;
+          }
+        } catch (error) {
+          console.error('Error obteniendo nombre del cliente:', error);
+        }
+      } else if (citaData.clienteAmbulatorio) {
+        nombreCliente = citaData.clienteAmbulatorio.nombre;
+      }
+
+      const fechaFormateada = citaData.fechaReservada.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      await crearNotificacion(
+        'appointment',
+        'Nueva cita agendada',
+        `${nombreCliente} ha agendado una cita para ${fechaFormateada}`,
+        docRef.id // citaId
+      );
+
       return citaCreada;
     } catch (error) {
       console.error('Error al crear cita:', error);
@@ -182,6 +245,35 @@ export function useCitas() {
           ? { ...cita, ...datosActualizados }
           : cita
       ).sort((a, b) => a.fechaReservada.getTime() - b.fechaReservada.getTime()));
+
+      // Crear notificación si se marcó como pagado
+      if (datosActualizados.pagado === true) {
+        const citaActualizada = citas.find(c => c.id === id);
+        if (citaActualizada && !citaActualizada.pagado) {
+          // Era no pagada y ahora sí
+          let nombreCliente = 'Cliente';
+          if (citaActualizada.clienteId) {
+            try {
+              const clienteDoc = await getDoc(doc(firebaseDb, 'clientes', citaActualizada.clienteId));
+              if (clienteDoc.exists()) {
+                nombreCliente = clienteDoc.data().datos.nombre;
+              }
+            } catch (error) {
+              console.error('Error obteniendo nombre del cliente:', error);
+            }
+          } else if (citaActualizada.clienteAmbulatorio) {
+            nombreCliente = citaActualizada.clienteAmbulatorio.nombre;
+          }
+
+          const precio = citaActualizada.precioFinal || 0;
+          await crearNotificacion(
+            'payment',
+            'Pago recibido',
+            `$${precio} de ${nombreCliente}`,
+            id // citaId
+          );
+        }
+      }
 
     } catch (error) {
       console.error('Error al actualizar cita:', error);

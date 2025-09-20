@@ -2,22 +2,17 @@
 
 import {  
   Calendar, 
-  CurrencyDollar,
   Bell01,
-  Clock,
-  AlertCircle,
-  X,
-  FileX01,
-  User01,
-  Plus
 } from "@untitledui/icons";
 import { useState, useMemo } from "react";
 import StatsGrid from '@/components/dashboard/StatsGrid';
 import ClientesRecientes from '@/components/dashboard/ClientesRecientes';
 import TicketsAbiertos from '@/components/dashboard/TicketsAbiertos';
+import NotificationsPanel from '@/components/dashboard/NotificationsPanel';
 import { useCitas } from '@/hooks/use-citas';
 import { useClientes } from '@/hooks/use-clientes';
 import { useServicios } from '@/hooks/use-servicios';
+import { useNotificaciones } from '@/hooks/use-notificaciones';
 import DayAppointmentsModal from '@/components/application/modals/DayAppointmentsModal';
 
 export default function InicioPage() {
@@ -27,6 +22,7 @@ export default function InicioPage() {
   const { citas, loading: citasLoading } = useCitas();
   const { clientes } = useClientes();
   const { servicios } = useServicios();
+  const { notificaciones } = useNotificaciones();
   
   // Función para manejar el click en un día
   const handleDayClick = (day: typeof weekSchedule[0]) => {
@@ -79,41 +75,6 @@ export default function InicioPage() {
     return weekDays;
   }, [citas]);
 
-  const notifications = [
-    { 
-      id: 1, 
-      type: "appointment", 
-      title: "Nueva cita agendada", 
-      message: "Juan Pérez ha agendado una cita para mañana a las 3:00 PM",
-      time: "hace 5 min",
-      unread: true 
-    },
-    { 
-      id: 2, 
-      type: "reminder", 
-      title: "Recordatorio", 
-      message: "Cita con Laura Díaz en 30 minutos",
-      time: "hace 10 min",
-      unread: true 
-    },
-    { 
-      id: 3, 
-      type: "ticket", 
-      title: "Nuevo ticket de soporte", 
-      message: "Cliente solicita cambio de horario",
-      time: "hace 1 hora",
-      unread: false 
-    },
-    { 
-      id: 4, 
-      type: "payment", 
-      title: "Pago recibido", 
-      message: "$150 de Carlos López",
-      time: "hace 2 horas",
-      unread: false 
-    },
-  ];
-
   return (
     <div className="p-6 lg:p-8">
       {/* Header con notificaciones */}
@@ -132,59 +93,17 @@ export default function InicioPage() {
             className="relative p-2 bg-primary border border-secondary rounded-lg hover:bg-secondary transition-colors"
           >
             <Bell01 className="h-5 w-5 text-primary" />
-            {notifications.filter(n => n.unread).length > 0 && (
+            {notificaciones.filter(n => n.unread).length > 0 && (
               <span className="absolute -top-1 -right-1 h-5 w-5 bg-error-600 text-white text-xs rounded-full flex items-center justify-center">
-                {notifications.filter(n => n.unread).length}
+                {notificaciones.filter(n => n.unread).length}
               </span>
             )}
           </button>
 
-          {/* Panel de notificaciones */}
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-96 bg-primary border border-secondary rounded-lg shadow-xl z-50">
-              <div className="p-4 border-b border-secondary flex items-center justify-between">
-                <h3 className="font-semibold text-primary">Notificaciones</h3>
-                <button 
-                  onClick={() => setShowNotifications(false)}
-                  className="p-1 hover:bg-secondary rounded"
-                >
-                  <X className="h-4 w-4 text-tertiary" />
-                </button>
-              </div>
-              <div className="max-h-96 overflow-y-auto">
-                {notifications.map((notif) => (
-                  <div 
-                    key={notif.id} 
-                    className={`p-4 border-b border-secondary hover:bg-secondary cursor-pointer ${notif.unread ? 'bg-brand-25' : ''}`}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-lg ${
-                        notif.type === 'appointment' ? 'bg-success-50' :
-                        notif.type === 'reminder' ? 'bg-warning-50' :
-                        notif.type === 'ticket' ? 'bg-error-50' :
-                        'bg-blue-50'
-                      }`}>
-                        {notif.type === 'appointment' && <Calendar className="h-4 w-4 text-success-600" />}
-                        {notif.type === 'reminder' && <Clock className="h-4 w-4 text-warning-600" />}
-                        {notif.type === 'ticket' && <AlertCircle className="h-4 w-4 text-error-600" />}
-                        {notif.type === 'payment' && <CurrencyDollar className="h-4 w-4 text-blue-600" />}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-primary">{notif.title}</p>
-                        <p className="text-sm text-tertiary mt-1">{notif.message}</p>
-                        <p className="text-xs text-quaternary mt-2">{notif.time}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="p-3 border-t border-secondary">
-                <button className="w-full text-center text-sm text-brand-600 font-medium hover:text-brand-700">
-                  Ver todas las notificaciones
-                </button>
-              </div>
-            </div>
-          )}
+          <NotificationsPanel
+            showNotifications={showNotifications}
+            setShowNotifications={setShowNotifications}
+          />
         </div>
       </div>
 

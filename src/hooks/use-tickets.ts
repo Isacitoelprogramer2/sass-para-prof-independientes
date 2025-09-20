@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { firebaseDb, firebaseAuth } from "@/lib/firebase";
 import { Ticket } from "@/types/ticket";
+import { crearNotificacion } from "@/utils/notificaciones";
 
 interface UseTicketsOptions {
   orderByField?: string;
@@ -174,6 +175,30 @@ export function useTickets(options?: UseTicketsOptions) {
       } as Ticket;
 
       setTickets((prev) => [created, ...prev]);
+
+      // Crear notificación de nuevo ticket
+      let nombreCliente = 'Cliente';
+      if (payload.clienteId) {
+        try {
+          const clienteDoc = await getDoc(doc(firebaseDb, 'clientes', payload.clienteId));
+          if (clienteDoc.exists()) {
+            nombreCliente = clienteDoc.data().datos.nombre;
+          }
+        } catch (error) {
+          console.error('Error obteniendo nombre del cliente:', error);
+        }
+      } else if (payload.clienteContacto) {
+        nombreCliente = payload.clienteContacto.nombre;
+      }
+
+      await crearNotificacion(
+        'ticket',
+        'Nuevo ticket de soporte',
+        `${nombreCliente} ha creado un ticket: ${payload.titulo}`,
+        undefined, // citaId
+        ref.id // ticketId
+      );
+
       return created;
     } catch (e: any) {
       console.error("Error creando ticket:", e);

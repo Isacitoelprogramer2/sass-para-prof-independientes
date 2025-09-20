@@ -180,6 +180,17 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
         jsDate.setHours(hours, minutes, 0, 0);
       }
       onChangeField('fechaReservada', jsDate);
+      
+      // Si cambió a hoy y la hora seleccionada ya pasó, resetear la selección
+      const todayDate = today(getLocalTimeZone());
+      const isToday = date.compare(todayDate) === 0;
+      if (isToday && selectedTime) {
+        const now = new Date();
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        if (hours < now.getHours() || (hours === now.getHours() && minutes <= now.getMinutes())) {
+          setSelectedTime("");
+        }
+      }
     }
   };
 
@@ -220,16 +231,37 @@ export function CitaModal({ isOpen, onClose, onSave, initialData }: CitaModalPro
    */
   const generateTimeOptions = () => {
     const options = [];
+    const now = new Date();
+    const todayDate = today(getLocalTimeZone());
+    const isToday = selectedDate && selectedDate.compare(todayDate) === 0;
+    
     for (let hour = 0; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
+        // Si es hoy, filtrar horas que ya pasaron
+        if (isToday) {
+          const currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
+          
+          // Si la hora ya pasó, saltar
+          if (hour < currentHour || (hour === currentHour && minute <= currentMinute)) {
+            continue;
+          }
+        }
+        
         const hourStr = hour.toString().padStart(2, '0');
         const minuteStr = minute.toString().padStart(2, '0');
         const timeStr = `${hourStr}:${minuteStr}`;
+        
+        // Convertir a formato 12 horas con AM/PM
+        const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayLabel = `${hour12}:${minuteStr} ${ampm}`;
+        
         options.push(
           <SelectItem
             key={timeStr}
             id={timeStr}
-            label={timeStr}
+            label={displayLabel}
           />
         );
       }
