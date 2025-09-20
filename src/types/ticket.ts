@@ -1,5 +1,6 @@
 export interface Ticket {
   id: string;
+  numero: string; // Numeración con formato #000000
   titulo: string;
   clienteId: string;
   estado: "ABIERTO" | "EN_PROGRESO" | "CERRADO";

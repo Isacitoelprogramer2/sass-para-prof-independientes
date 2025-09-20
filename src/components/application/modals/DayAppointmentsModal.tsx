@@ -116,7 +116,8 @@ export default function DayAppointmentsModal({
                           <p className="text-lg font-semibold text-primary">
                             {new Date(cita.fechaReservada).toLocaleTimeString('es-ES', {
                               hour: '2-digit',
-                              minute: '2-digit'
+                              minute: '2-digit',
+                              hour12: true
                             })}
                           </p>
                         </div>

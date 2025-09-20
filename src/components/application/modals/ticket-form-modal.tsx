@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void;
   // onSave ahora puede recibir optional clienteContacto para clientes ambulatorios
   onSave: (
-    payload: Omit<Ticket, 'id' | 'usuarioId' | 'fechaIngreso'>,
+    payload: Omit<Ticket, 'id' | 'usuarioId' | 'fechaIngreso' | 'numero'>,
     clienteContacto?: { id: string; nombre: string; telefono: string; email?: string }
   ) => Promise<void> | void;
   // Lista opcional de clientes guardados para modo RECURRENTE
@@ -24,6 +24,7 @@ interface Props {
 
 export function TicketFormModal({ isOpen, onClose, onSave, initial, savedClients }: Props) {
   const [descripcion, setDescripcion] = useState(initial?.descripcion || "");
+  const [titulo, setTitulo] = useState(initial?.titulo || "");
   const [prioridad, setPrioridad] = useState<Ticket['prioridad']>((initial?.prioridad as any) || 'MEDIA');
   const [tipoContexto, setTipoContexto] = useState<Ticket['tipoContexto']>((initial?.tipoContexto as any) || 'DURANTE_SERVICIO');
   const [asignadoA, setAsignadoA] = useState(initial?.asignadoA || '');
@@ -43,6 +44,7 @@ export function TicketFormModal({ isOpen, onClose, onSave, initial, savedClients
   useEffect(() => {
     if (isOpen) {
       setDescripcion(initial?.descripcion || "");
+      setTitulo(initial?.titulo || "");
       setPrioridad((initial?.prioridad as any) || 'MEDIA');
       setTipoContexto((initial?.tipoContexto as any) || 'DURANTE_SERVICIO');
       setAsignadoA(initial?.asignadoA || '');
@@ -60,6 +62,9 @@ export function TicketFormModal({ isOpen, onClose, onSave, initial, savedClients
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
     
+    if (!titulo.trim()) {
+      newErrors.titulo = 'El título es obligatorio';
+    }
     if (!descripcion.trim()) {
       newErrors.descripcion = 'La descripción es obligatoria';
     }
@@ -86,12 +91,12 @@ export function TicketFormModal({ isOpen, onClose, onSave, initial, savedClients
     setSaving(true);
     try {
       // Preparar payload base
-      const basePayload: Omit<Ticket, 'id' | 'usuarioId' | 'fechaIngreso'> = {
+      const basePayload: Omit<Ticket, 'id' | 'usuarioId' | 'fechaIngreso' | 'numero'> = {
+        titulo,
         descripcion,
         prioridad,
         tipoContexto,
         asignadoA,
-        titulo: descripcion.substring(0, 60),
         clienteId: clienteId,
         estado,
       };
@@ -199,6 +204,26 @@ export function TicketFormModal({ isOpen, onClose, onSave, initial, savedClients
                   )}
                   <p className="text-xs text-tertiary">
                     {descripcion.length}/1000 caracteres
+                  </p>
+                </div>
+
+                {/* Title */}
+                <div className="space-y-2">
+                  <label htmlFor="titulo" className="block text-sm font-medium text-secondary">
+                    Título del Ticket *
+                  </label>
+                  <Input
+                    id="titulo"
+                    value={titulo}
+                    onChange={setTitulo}
+                    placeholder="Breve resumen del ticket..."
+                    className={errors.titulo ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : ''}
+                  />
+                  {errors.titulo && (
+                    <p className="text-sm text-error-600">{errors.titulo}</p>
+                  )}
+                  <p className="text-xs text-tertiary">
+                    {titulo.length}/100 caracteres
                   </p>
                 </div>
 

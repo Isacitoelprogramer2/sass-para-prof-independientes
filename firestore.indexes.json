@@ -101,7 +101,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "fechaIngreso",
+          "fieldPath": "numero",
           "order": "DESCENDING"
         }
       ]

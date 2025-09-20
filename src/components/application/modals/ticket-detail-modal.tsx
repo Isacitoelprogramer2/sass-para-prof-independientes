@@ -103,7 +103,7 @@ export function TicketDetailModal({ isOpen, onClose, ticket }: Props) {
                       <h3 id="ticket-detail-title" className="text-lg font-semibold text-primary">
                         Detalle de Ticket
                       </h3>
-                      <p className="text-sm text-tertiary">#{ticket.id}</p>
+                      <p className="text-sm text-tertiary">{ticket.numero}</p>
                     </div>
                   </div>
                   <Button
@@ -160,8 +160,8 @@ export function TicketDetailModal({ isOpen, onClose, ticket }: Props) {
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Hash01 className="size-4 text-tertiary" />
-                        <span className="text-sm font-medium text-secondary">ID:</span>
-                        <span className="text-sm text-primary font-mono">{ticket.id}</span>
+                        <span className="text-sm font-medium text-secondary">Número:</span>
+                        <span className="text-sm text-primary font-mono">{ticket.numero}</span>
                       </div>
                       
                       <div className="flex items-center gap-2">

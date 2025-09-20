@@ -47,10 +47,24 @@ export function useTickets(options?: UseTicketsOptions) {
         const snap = await getDocs(ticketsQuery);
         const data = snap.docs.map((d) => {
           const raw = d.data() as any;
+          
+          // Manejar fechaIngreso de manera robusta
+          let fechaIngreso: Date;
+          if (raw.fechaIngreso?.toDate) {
+            fechaIngreso = raw.fechaIngreso.toDate();
+          } else if (typeof raw.fechaIngreso === 'string') {
+            const parsed = new Date(raw.fechaIngreso);
+            fechaIngreso = isNaN(parsed.getTime()) ? new Date() : parsed;
+          } else if (raw.fechaIngreso instanceof Date) {
+            fechaIngreso = raw.fechaIngreso;
+          } else {
+            fechaIngreso = new Date();
+          }
+          
           return {
             id: d.id,
             ...raw,
-            fechaIngreso: raw.fechaIngreso?.toDate ? raw.fechaIngreso.toDate() : raw.fechaIngreso || new Date(),
+            fechaIngreso,
           } as Ticket;
         });
 
@@ -86,14 +100,32 @@ export function useTickets(options?: UseTicketsOptions) {
     return obj;
   };
 
-  const crearTicket = async (payload: Omit<Ticket, "id" | "usuarioId" | "fechaIngreso">) => {
+  const crearTicket = async (payload: Omit<Ticket, "id" | "usuarioId" | "fechaIngreso" | "numero">) => {
     if (!firebaseAuth.currentUser) throw new Error("Usuario no autenticado");
     console.log("Creando ticket - Usuario autenticado:", firebaseAuth.currentUser.uid);
     console.log("Payload recibido:", payload);
     setSaving(true);
     try {
+      // Generar numero incremental
+      const ticketsQuery = query(
+        collection(firebaseDb, "tickets"),
+        where("usuarioId", "==", firebaseAuth.currentUser.uid)
+      );
+      const snap = await getDocs(ticketsQuery);
+      let maxNumber = 0;
+      snap.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.numero) {
+          const num = parseInt(data.numero.replace('#', ''), 10);
+          if (num > maxNumber) maxNumber = num;
+        }
+      });
+      const nextNumber = maxNumber + 1;
+      const numero = `#${nextNumber.toString().padStart(6, '0')}`;
+
       const docBody: any = {
         ...payload,
+        numero,
         // Si asignadoA está vacío, usar el usuarioId como valor por defecto
         ...(payload.asignadoA === "" && { asignadoA: firebaseAuth.currentUser.uid }),
         usuarioId: firebaseAuth.currentUser.uid,
@@ -136,6 +168,7 @@ export function useTickets(options?: UseTicketsOptions) {
       const created: Ticket = {
         id: ref.id,
         ...payload,
+        numero,
         usuarioId: firebaseAuth.currentUser.uid,
         fechaIngreso: new Date(),
       } as Ticket;
@@ -192,7 +225,21 @@ export function useTickets(options?: UseTicketsOptions) {
       const snap = await getDoc(ref);
       if (!snap.exists()) return null;
       const data = snap.data() as any;
-      return { id: snap.id, ...data, fechaIngreso: data.fechaIngreso?.toDate ? data.fechaIngreso.toDate() : data.fechaIngreso } as Ticket;
+      
+      // Manejar fechaIngreso de manera robusta
+      let fechaIngreso: Date;
+      if (data.fechaIngreso?.toDate) {
+        fechaIngreso = data.fechaIngreso.toDate();
+      } else if (typeof data.fechaIngreso === 'string') {
+        const parsed = new Date(data.fechaIngreso);
+        fechaIngreso = isNaN(parsed.getTime()) ? new Date() : parsed;
+      } else if (data.fechaIngreso instanceof Date) {
+        fechaIngreso = data.fechaIngreso;
+      } else {
+        fechaIngreso = new Date();
+      }
+      
+      return { id: snap.id, ...data, fechaIngreso } as Ticket;
     } catch (e) {
       console.error("Error obteniendo ticket:", e);
       return null;

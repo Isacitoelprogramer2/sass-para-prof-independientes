@@ -245,7 +245,7 @@ export function ModalPerfilCliente({
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <p className="text-sm font-medium text-primary mb-1">
-                                Ticket #{ticket.id || index + 1}
+                                Ticket {ticket.numero}
                               </p>
                               <p className="text-sm text-tertiary">
                                 {ticket.descripcion || "Sin descripción"}
@@ -253,14 +253,14 @@ export function ModalPerfilCliente({
                               <div className="flex items-center space-x-2 mt-2">
                                 <span
                                   className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
-                                    ticket.tipoUrgencia === "ALTA"
+                                    ticket.prioridad === "ALTA"
                                       ? "bg-error-50 text-error-700 border-error-200"
-                                      : ticket.tipoUrgencia === "MEDIA"
+                                      : ticket.prioridad === "MEDIA"
                                       ? "bg-warning-50 text-warning-700 border-warning-200"
                                       : "bg-success-50 text-success-700 border-success-200"
                                   }`}
                                 >
-                                  {ticket.tipoUrgencia}
+                                  {ticket.prioridad}
                                 </span>
                                 <span className="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-gray-50 text-gray-700 border-gray-200">
                                   {ticket.tipoContexto === "DURANTE_SERVICIO" ? "Durante servicio" : "Post servicio"}

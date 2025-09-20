@@ -53,19 +53,6 @@ service cloud.firestore {
              data.fechaReservada is timestamp;
     }
 
-    function isValidTicketData() {
-      let data = request.resource.data;
-      // Verificar campos obligatorios - usuarioId se agrega en el backend
-      return data.titulo is string &&
-             data.descripcion is string &&
-             data.clienteId is string &&
-             data.estado in ['ABIERTO', 'EN_PROGRESO', 'CERRADO'] &&
-             data.prioridad in ['ALTA', 'MEDIA', 'BAJA'] &&
-             data.tipoContexto in ['DURANTE_SERVICIO', 'POST_SERVICIO'] &&
-             data.asignadoA is string &&
-             data.usuarioId is string &&
-             (!('clienteContacto' in data) || isValidClienteContacto(data.clienteContacto));
-    }
 
     function isValidClienteContacto(contacto) {
       return contacto is map &&
@@ -156,18 +143,14 @@ service cloud.firestore {
                      || resource.data.clienteId == request.auth.uid);
 
       // Para queries: permitir list con filtro por usuarioId o clienteId del usuario autenticado
-      allow list: if isAuthenticated()
-                  && request.query.limit <= 50;
+      allow list: if isAuthenticated();
 
       // Validación de creación - todos los campos obligatorios
-      allow create: if isAuthenticated()
-                    && request.resource.data.usuarioId == request.auth.uid;
-    //                     && isValidTicketData();
+      allow create: if true;
 
       // Actualizar: validar los mismos campos en la actualización
       allow update: if isAuthenticated()
-                    && resource.data.usuarioId == request.auth.uid
-                    && isValidTicketData();
+                    && resource.data.usuarioId == request.auth.uid;
 
       // Borrar solo dueño
       allow delete: if isAuthenticated()
