@@ -5,11 +5,20 @@ export interface Usuario {
     profesion: string;
     fotoPerfil?: string;
     experiencia?: string;
+    provincia?: string;
+    pais?: string;
   };
   datosNegocio: {
     nombre?: string; // puede ser distinto al nombre del profesional
     descripcion: string;
     colorMarca?: string;
+    redesSociales?: {
+      facebook?: string;
+      instagram?: string;
+      linkedin?: string;
+      twitter?: string;
+      otro?: string;
+    };
     informacionContacto: {
       telefono: string;
       correo: string;

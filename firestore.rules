@@ -78,8 +78,8 @@ service cloud.firestore {
 
     // USUARIOS
     match /usuarios/{userId} {
-      // Leer solo el propio documento por ID (mejor usar get por ID).
-      allow get: if isOwner(userId);
+      // Lectura pública para perfiles: cualquiera puede leer.
+      allow get: if true;
       // Evitar list para no tener que usar documentId() == uid (opcional).
       allow list: if false;
 
@@ -90,8 +90,8 @@ service cloud.firestore {
 
     // SERVICIOS
     match /servicios/{servicioId} {
-      // Catálogo: cualquier autenticado puede leer (get y list).
-      allow get, list: if isAuthenticated();
+      // Catálogo público: cualquiera puede leer.
+      allow get, list: if true;
 
       allow create: if isAuthenticated()
                     && isOwner(request.resource.data.usuarioId)

@@ -159,7 +159,7 @@ export default function CatalogoPage() {
             iconLeading={ArrowNarrowUpRight}
             color='tertiary'
             size="sm" 
-            onClick={() => router.push('/catalogo')}
+            onClick={() => router.push('/pagina-catalogo')}
           >
             Página de catálogo
           </Button>

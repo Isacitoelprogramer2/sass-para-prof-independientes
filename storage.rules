@@ -32,8 +32,11 @@ service firebase.storage {
 
     // Archivos de usuario (fotos de perfil, portadas, etc.)
     match /usuarios/{userId}/{allPaths=**} {
-      // Solo el propietario puede leer y escribir sus archivos
-      allow read, write: if isAuthenticated() && isOwner(userId);
+      // Lectura pública para perfiles: cualquiera puede leer.
+      allow read: if true;
+      
+      // Solo el propietario puede escribir
+      allow write: if isAuthenticated() && isOwner(userId);
       
       // Validaciones para subida de archivos
       allow create: if isAuthenticated() && 

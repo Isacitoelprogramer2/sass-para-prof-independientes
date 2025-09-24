@@ -5,6 +5,8 @@ import { Button } from "../../base/buttons/button";
 import { Input } from "../../base/input/input";
 import { TextArea } from "../../base/textarea/textarea";
 import { FileTrigger } from "../../base/file-upload-trigger/file-upload-trigger";
+import { Select } from "../../base/select/select";
+import { SelectItem } from "../../base/select/select-item";
 import { Usuario } from "@/types/usuario";
 
 interface PerfilDelUsuarioProps {
@@ -24,9 +26,20 @@ const PerfilDelUsuario: React.FC<PerfilDelUsuarioProps> = ({
     nombres: usuario?.datosProfesional.nombres || '',
     profesion: usuario?.datosProfesional.profesion || '',
     experiencia: usuario?.datosProfesional.experiencia || '',
+    provincia: usuario?.datosProfesional.provincia || '',
+    pais: usuario?.datosProfesional.pais || 'Perú',
   });
   
   const [fotoPerfil, setFotoPerfil] = useState<File | null>(null);
+
+  const departamentos = [
+    'Amazonas', 'Áncash', 'Apurímac', 'Arequipa', 'Ayacucho', 'Cajamarca', 'Cusco', 
+    'Huancavelica', 'Huánuco', 'Ica', 'Junín', 'La Libertad', 'Lambayeque', 'Lima', 
+    'Loreto', 'Madre de Dios', 'Moquegua', 'Pasco', 'Piura', 'Puno', 'San Martín', 
+    'Tacna', 'Tumbes', 'Ucayali'
+  ];
+
+  const paises = ['Perú'];
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
@@ -47,6 +60,8 @@ const PerfilDelUsuario: React.FC<PerfilDelUsuarioProps> = ({
           nombres: formData.nombres,
           profesion: formData.profesion,
           experiencia: formData.experiencia,
+          provincia: formData.provincia,
+          pais: formData.pais,
         },
       };
       
@@ -157,6 +172,32 @@ const PerfilDelUsuario: React.FC<PerfilDelUsuarioProps> = ({
           rows={4}
           placeholder="Cuéntanos sobre tu experiencia profesional, logros, certificaciones, etc."
         />
+      </div>
+
+      {/* Ubicación */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-primary mb-2">País</label>
+          <Select
+            items={paises.map(pais => ({ id: pais, label: pais }))}
+            selectedKey={formData.pais}
+            onSelectionChange={(key) => handleInputChange('pais', key as string)}
+            placeholder="Selecciona tu país"
+          >
+            {(item) => <SelectItem id={item.id}>{item.label}</SelectItem>}
+          </Select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-primary mb-2">Provincia</label>
+          <Select
+            items={departamentos.map(dep => ({ id: dep, label: dep }))}
+            selectedKey={formData.provincia}
+            onSelectionChange={(key) => handleInputChange('provincia', key as string)}
+            placeholder="Selecciona tu provincia"
+          >
+            {(item) => <SelectItem id={item.id}>{item.label}</SelectItem>}
+          </Select>
+        </div>
       </div>
 
       {/* Botón de guardar */}
