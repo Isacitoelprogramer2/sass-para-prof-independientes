@@ -228,10 +228,10 @@ export default function TicketsAbiertos() {
                 <span className="text-xs font-mono text-tertiary">{ticket.numero}</span>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
                   ticket.priority === 'alta'
-                    ? 'bg-error-50 text-error-700'
+                    ? 'bg-error-700/40 text-error-100'
                     : ticket.priority === 'media'
-                    ? 'bg-warning-50 text-warning-700'
-                    : 'bg-gray-50 text-gray-700'
+                    ? 'bg-warning-700/40 text-warning-50'
+                    : 'bg-gray-700/30 text-gray-50'
                 }`}>
                   {ticket.priority === 'alta' ? 'Alta' :
                    ticket.priority === 'media' ? 'Media' : 'Baja'}

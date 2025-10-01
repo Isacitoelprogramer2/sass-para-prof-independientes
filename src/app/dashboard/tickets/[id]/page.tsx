@@ -7,6 +7,19 @@ import { useMemo } from "react";
 import { ArrowLeft } from "@untitledui/icons";
 import { useRouter } from "next/navigation";
 
+// Función helper para convertir fecha de Firestore o Date a Date
+const convertirFecha = (fecha: Date | { seconds: number; nanoseconds: number }): Date => {
+  if (fecha instanceof Date) {
+    return fecha;
+  }
+  // Si es un Timestamp de Firestore
+  if (fecha && typeof fecha === 'object' && 'seconds' in fecha) {
+    return new Date(fecha.seconds * 1000);
+  }
+  // Fallback por si acaso
+  return new Date();
+};
+
 export default function TicketDetailPage() {
   const params = useParams();
   const ticketId = params.id as string;
@@ -138,7 +151,13 @@ export default function TicketDetailPage() {
                   </div>
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-800/40 border border-gray-700/30">
                     <span className="text-gray-400 font-medium min-w-[80px]">Fecha de ingreso:</span>
-                    <span className="text-gray-200">{new Date(ticket.fechaIngreso).toLocaleString()}</span>
+                    <span className="text-gray-200">{convertirFecha(ticket.fechaIngreso).toLocaleString('es-ES', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</span>
                   </div>
                 </div>
               </div>
