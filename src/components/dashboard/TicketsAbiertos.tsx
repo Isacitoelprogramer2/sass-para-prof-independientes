@@ -1,39 +1,165 @@
-"use client";
-
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileX01 } from "@untitledui/icons";
 import { useTickets } from "@/hooks/use-tickets";
 import { useClientes } from "@/hooks/use-clientes";
+
+type FsTimestamp = { toMillis?: () => number; seconds?: number; nanoseconds?: number };
+
+/** Acepta Firestore Timestamp, {seconds,nanoseconds}, Date, number(ms) o string ISO y devuelve ms. */
+function toMillisSafe(v: unknown): number {
+  // Firestore Timestamp real
+  if (v && typeof (v as FsTimestamp).toMillis === "function") {
+    return (v as FsTimestamp).toMillis!();
+  }
+  // Objeto emulado {seconds, nanoseconds}
+  if (v && typeof (v as FsTimestamp).seconds === "number") {
+    const s = (v as FsTimestamp).seconds!;
+    const ns = (v as FsTimestamp).nanoseconds ?? 0;
+    return s * 1000 + Math.floor(ns / 1e6);
+  }
+  if (v instanceof Date) return v.getTime();
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const t = new Date(v).getTime(); // Solo fiable si es ISO (ej. 2025-09-30T21:50:00Z)
+    if (!Number.isNaN(t)) return t;
+  }
+  throw new Error("fechaIngreso inválida/no normalizada");
+}
+
+/** Sugerencia de refresco: evita intervalos cortos cuando ya pasaron horas/días. */
+function suggestedRefreshMs(fromMs: number, nowMs: number): number {
+  const diffSec = Math.abs(Math.floor((nowMs - fromMs) / 1000));
+  if (diffSec < 60) return 5_000;        // cada 5s si es "ahora"
+  if (diffSec < 3_600) return 30_000;    // cada 30s si <1h
+  if (diffSec < 86_400) return 60_000;   // cada 1min si <24h
+  if (diffSec < 604_800) return 300_000; // cada 5min si <7d
+  return 3_600_000;                       // cada 1h si >7d
+}
+
+/** Para una lista de fechas, usa el refresco mínimo que necesites. */
+function minRefreshForAll(msList: number[], nowMs: number): number {
+  if (!msList.length) return 60_000;
+  return msList.reduce((m, t) => Math.min(m, suggestedRefreshMs(t, nowMs)), Infinity);
+}
 
 export default function TicketsAbiertos() {
   const router = useRouter();
   const { tickets, loading: ticketsLoading } = useTickets();
   const { clientes } = useClientes();
 
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    let timer: number | null = null;
+
+    const tick = () => setCurrentTime(Date.now());
+
+    const start = () => {
+      // Calcula el refresco mínimo según lo que tengas en pantalla
+      const fuentes = tickets
+        .filter((t: any) => t?.estado === "ABIERTO")
+        .filter((t: any) => {
+          try {
+            toMillisSafe(t?.fechaIngreso);
+            return true;
+          } catch {
+            return false;
+          }
+        })
+        .slice(0, 5)
+        .map((t: any) => {
+          try { return toMillisSafe(t?.fechaIngreso); } catch { return null; }
+        })
+        .filter((x: number | null): x is number => typeof x === "number");
+
+      const delay = minRefreshForAll(fuentes, Date.now());
+      timer = window.setTimeout(tick, delay) as unknown as number;
+    };
+
+    const stop = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    const onVis = () => {
+      stop();
+      if (document.visibilityState === "visible") tick();
+    };
+
+    document.addEventListener("visibilitychange", onVis);
+    start();
+
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVis);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tickets]); // <- no dependas de currentTime o se reprograma sin necesidad
+
   // Filtrar tickets abiertos y obtener información del cliente
   const openTickets = useMemo(() => {
     return tickets
       .filter(ticket => ticket.estado === "ABIERTO")
+      .filter(ticket => {
+        try {
+          toMillisSafe(ticket.fechaIngreso);
+          return true;
+        } catch {
+          return false; // Excluir tickets con fecha inválida
+        }
+      })
+      .sort((a, b) => {
+        try {
+          const aMs = toMillisSafe(a.fechaIngreso);
+          const bMs = toMillisSafe(b.fechaIngreso);
+          return bMs - aMs; // Más reciente primero
+        } catch {
+          return 0;
+        }
+      })
       .slice(0, 5) // Mostrar máximo 5 tickets
       .map(ticket => {
         const cliente = clientes.find(c => c.id === ticket.clienteId);
         const clienteNombre = cliente?.datos.nombre || ticket.clienteContacto?.nombre || "Cliente desconocido";
 
-        // Calcular tiempo transcurrido
-        const ahora = new Date();
-        const fechaIngreso = new Date(ticket.fechaIngreso);
-        const diffMs = ahora.getTime() - fechaIngreso.getTime();
-        const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffDias = Math.floor(diffHoras / 24);
+        // Calcular tiempo transcurrido con manejo de errores
+        let tiempo = "Fecha inválida";
+        try {
+          const ahora = currentTime;
 
-        let tiempo;
-        if (diffDias > 0) {
-          tiempo = `hace ${diffDias}d`;
-        } else if (diffHoras > 0) {
-          tiempo = `hace ${diffHoras}h`;
-        } else {
-          tiempo = "hace menos de 1h";
+          const createdMs = toMillisSafe(ticket.fechaIngreso); // <- clave
+          const diffMs = ahora - createdMs;
+
+          if (!Number.isFinite(diffMs)) throw new Error("diff inválido");
+
+          const diffMinutos = Math.floor(diffMs / (1000 * 60));
+          const diffHoras   = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffDias    = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          const diffSemanas = Math.floor(diffDias / 7);
+          const diffMeses   = Math.floor(diffDias / 30);
+          const diffAnios   = Math.floor(diffDias / 365);
+
+          // Evita "hace 0m" cuando <45s
+          if (diffMs < 45_000) {
+            tiempo = "ahora";
+          } else if (diffAnios > 0) {
+            tiempo = `hace ${diffAnios} ${diffAnios === 1 ? "año" : "años"}`;
+          } else if (diffMeses > 0) {
+            tiempo = `hace ${diffMeses} ${diffMeses === 1 ? "mes" : "meses"}`;
+          } else if (diffSemanas > 0) {
+            tiempo = `hace ${diffSemanas} ${diffSemanas === 1 ? "semana" : "semanas"}`;
+          } else if (diffDias > 0) {
+            tiempo = `hace ${diffDias} ${diffDias === 1 ? "día" : "días"}`;
+          } else if (diffHoras > 0) {
+            tiempo = `hace ${diffHoras} ${diffHoras === 1 ? "hora" : "horas"}`;
+          } else {
+            tiempo = `hace ${diffMinutos} ${diffMinutos === 1 ? "minuto" : "minutos"}`;
+          }
+        } catch (error) {
+          console.error("Error calculando tiempo para ticket:", ticket.id, error);
         }
 
         return {
@@ -46,7 +172,7 @@ export default function TicketsAbiertos() {
           fullTicket: ticket
         };
       });
-  }, [tickets, clientes]);
+  }, [tickets, clientes, currentTime]);
 
   const handleTicketClick = (ticketId: string) => {
     router.push(`/dashboard/tickets/${ticketId}`);

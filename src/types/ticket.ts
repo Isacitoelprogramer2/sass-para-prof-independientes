@@ -6,7 +6,7 @@ export interface Ticket {
   estado: "ABIERTO" | "EN_PROGRESO" | "CERRADO";
   prioridad: "ALTA" | "MEDIA" | "BAJA";
   asignadoA: string; // ID del usuario asignado
-  fechaIngreso: Date;
+  fechaIngreso: Date | { seconds: number; nanoseconds: number };
   descripcion: string;
   tipoContexto: "DURANTE_SERVICIO" | "POST_SERVICIO";
   // Datos de contacto para clientes ambulatorios

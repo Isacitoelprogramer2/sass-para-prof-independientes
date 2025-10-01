@@ -21,6 +21,19 @@ function useDebounced(value: string, delay = 400) {
   return v;
 }
 
+// Función helper para convertir fecha de Firestore o Date a Date
+const convertirFecha = (fecha: Date | { seconds: number; nanoseconds: number }): Date => {
+  if (fecha instanceof Date) {
+    return fecha;
+  }
+  // Si es un Timestamp de Firestore
+  if (fecha && typeof fecha === 'object' && 'seconds' in fecha) {
+    return new Date(fecha.seconds * 1000);
+  }
+  // Fallback por si acaso
+  return new Date();
+};
+
 export default function TicketsPage() {
   const { tickets, loading, error, crearTicket, actualizarTicket, eliminarTicket } = useTickets();
 
@@ -287,7 +300,7 @@ export default function TicketsPage() {
                       <div className="flex items-center gap-4 text-sm text-tertiary">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          {new Date(t.fechaIngreso).toLocaleString('es-ES', {
+                          {convertirFecha(t.fechaIngreso).toLocaleString('es-ES', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric',

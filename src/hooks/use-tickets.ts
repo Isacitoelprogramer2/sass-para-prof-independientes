@@ -14,6 +14,7 @@ import {
   orderBy,
   limit,
   Timestamp,
+  serverTimestamp,
 } from "firebase/firestore";
 import { firebaseDb, firebaseAuth } from "@/lib/firebase";
 import { Ticket } from "@/types/ticket";
@@ -49,23 +50,10 @@ export function useTickets(options?: UseTicketsOptions) {
         const data = snap.docs.map((d) => {
           const raw = d.data() as any;
           
-          // Manejar fechaIngreso de manera robusta
-          let fechaIngreso: Date;
-          if (raw.fechaIngreso?.toDate) {
-            fechaIngreso = raw.fechaIngreso.toDate();
-          } else if (typeof raw.fechaIngreso === 'string') {
-            const parsed = new Date(raw.fechaIngreso);
-            fechaIngreso = isNaN(parsed.getTime()) ? new Date() : parsed;
-          } else if (raw.fechaIngreso instanceof Date) {
-            fechaIngreso = raw.fechaIngreso;
-          } else {
-            fechaIngreso = new Date();
-          }
-          
           return {
             id: d.id,
             ...raw,
-            fechaIngreso,
+            fechaIngreso: raw.fechaIngreso, // Mantener el Timestamp original de Firestore
           } as Ticket;
         });
 
@@ -89,6 +77,10 @@ export function useTickets(options?: UseTicketsOptions) {
     }
     
     if (typeof obj === 'object') {
+      // Preservar valores especiales de Firestore (como serverTimestamp)
+      if (obj._methodName) {
+        return obj;
+      }
       const copy: any = {};
       Object.keys(obj).forEach((k) => {
         if (typeof obj[k] !== "undefined") {
@@ -130,7 +122,7 @@ export function useTickets(options?: UseTicketsOptions) {
         // Si asignadoA está vacío, usar el usuarioId como valor por defecto
         ...(payload.asignadoA === "" && { asignadoA: firebaseAuth.currentUser.uid }),
         usuarioId: firebaseAuth.currentUser.uid,
-        fechaIngreso: Timestamp.fromDate(new Date()),
+        fechaIngreso: serverTimestamp(),
       };
       console.log("DocBody a enviar a Firestore:", docBody);
       console.log("Validando campos requeridos:");
