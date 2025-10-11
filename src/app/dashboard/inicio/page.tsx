@@ -13,7 +13,11 @@ import { useCitas } from '@/hooks/use-citas';
 import { useClientes } from '@/hooks/use-clientes';
 import { useServicios } from '@/hooks/use-servicios';
 import { useNotificaciones } from '@/hooks/use-notificaciones';
+import { useUsuario } from '@/hooks/use-usuario';
 import DayAppointmentsModal from '@/components/application/modals/DayAppointmentsModal';
+import { Button } from "@/components/base/buttons/button";
+import { ArrowNarrowUpRight } from "@untitledui/icons";
+import { useRouter } from "next/navigation";
 
 export default function InicioPage() {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -23,6 +27,8 @@ export default function InicioPage() {
   const { clientes } = useClientes();
   const { servicios } = useServicios();
   const { notificaciones } = useNotificaciones();
+  const { usuario } = useUsuario();
+  const router = useRouter();
   
   // Función para manejar el click en un día
   const handleDayClick = (day: typeof weekSchedule[0]) => {
@@ -87,7 +93,15 @@ export default function InicioPage() {
         </div>
         
         {/* Botón de notificaciones */}
-        <div className="relative">
+        <div className="relative gap-2 flex">
+          <Button
+            iconLeading={ArrowNarrowUpRight}
+            color='tertiary'
+            size="sm" 
+            onClick={() => window.open(`/perfil-profesional/${usuario?.id}`, '_blank')}
+          >
+            Página del Perfil
+        </Button>
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2 bg-primary border border-secondary rounded-lg hover:bg-secondary transition-colors"
@@ -105,6 +119,8 @@ export default function InicioPage() {
             setShowNotifications={setShowNotifications}
           />
         </div>
+
+
       </div>
 
       {/* Indicadores clave mejorados (datos reales) */}
