@@ -33,6 +33,7 @@ export default function ServiciosPage() {
     crearCita, 
     cambiarEstadoCita, 
     marcarPagado,
+    alternarActiva,
     obtenerCitasHoy, 
     obtenerCitasEstaSemana, 
     obtenerCitasEsteMes, 
@@ -162,6 +163,18 @@ export default function ServiciosPage() {
     } catch (error) {
       console.error('Error al cancelar cita:', error);
       alert('Error al cancelar la cita. Por favor intente nuevamente.');
+    }
+  };
+
+  /**
+   * Función para alternar el estado activa de una cita
+   */
+  const manejarAlternarActiva = async (citaId: string) => {
+    try {
+      await alternarActiva(citaId);
+    } catch (error) {
+      console.error('Error al alternar estado activa:', error);
+      alert('Error al cambiar el estado de la cita. Por favor intente nuevamente.');
     }
   };
 
@@ -369,6 +382,10 @@ export default function ServiciosPage() {
                             <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${cita?.pagado ? 'bg-success-900 text-success-100 border-success-800' : 'bg-warning-900 text-warning-100 border-warning-800'}`}>
                               {cita?.pagado ? '$ Pagado' : 'Pendiente de pago'}
                             </span>
+                            {/* Estado activa */}
+                            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${cita?.activa ? 'bg-blue-900 text-blue-100 border-blue-800' : 'bg-gray-900 text-gray-100 border-gray-800'}`}>
+                              {cita?.activa ? 'Activa' : 'Inactiva'}
+                            </span>
                             </div>
 
                           {cita.notas && (
@@ -412,6 +429,15 @@ export default function ServiciosPage() {
                           onClick={(e: React.MouseEvent) => { e.stopPropagation(); marcarPagado?.(cita.id); }}
                         >
                           {cita.pagado ? 'Marcar no pagado' : 'Marcar pagado'}
+                        </Button>
+                        {/* Botón para alternar estado activa */}
+                        <Button
+                          color={cita.activa ? 'secondary' : 'tertiary'}
+                          size="sm"
+                          iconLeading={Check}
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); manejarAlternarActiva(cita.id); }}
+                        >
+                          {cita.activa ? 'Desactivar' : 'Activar'}
                         </Button>
                       </div>
                     </div>

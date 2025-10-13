@@ -57,6 +57,7 @@ export function useCitas() {
             fechaRegistro: data.fechaRegistro?.toDate() || new Date(),
             fechaReservada: data.fechaReservada?.toDate() || new Date(),
               pagado: data.pagado ?? false,
+              activa: data.activa ?? false,
               // Precios: mapear campos si existen en Firestore
               precioTipo: data.precioTipo ?? undefined,
               precioFinal: typeof data.precioFinal === 'number' ? data.precioFinal : (data.precioFinal ? Number(data.precioFinal) : undefined),
@@ -126,6 +127,7 @@ export function useCitas() {
         codigoAcceso,
         fechaRegistro: Timestamp.fromDate(new Date()),
         fechaReservada: Timestamp.fromDate(citaData.fechaReservada),
+        activa: false, // Nueva cita inicia inactiva
         // si el caller pasó info de precio, respetarla; de lo contrario, queda undefined
         precioTipo: (citaData as any).precioTipo,
         precioFinal: (citaData as any).precioFinal,
@@ -151,6 +153,7 @@ export function useCitas() {
         ...citaData,
         codigoAcceso,
         fechaRegistro: new Date(),
+        activa: false, // Nueva cita inicia inactiva
         pagado: (citaData as any).pagado ?? false,
         precioTipo: (citaData as any).precioTipo,
         precioFinal: (citaData as any).precioFinal,
@@ -232,6 +235,10 @@ export function useCitas() {
       if (typeof datosParaActualizar.precioTipo !== 'undefined') {
         datosParaActualizar.precioTipo = datosParaActualizar.precioTipo;
       }
+      // Asegurar que activa se envíe como booleano si está presente
+      if (typeof datosParaActualizar.activa !== 'undefined') {
+        datosParaActualizar.activa = !!datosParaActualizar.activa;
+      }
 
       // Eliminar keys con undefined antes de actualizar
       Object.keys(datosParaActualizar).forEach(k => {
@@ -304,6 +311,32 @@ export function useCitas() {
       setCitas(prev => prev.map(c => c.id === id ? { ...c, pagado: nuevoValor } : c));
     } catch (error) {
       console.error('Error al marcar pagado:', error);
+      throw error;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Alternar el estado activa de una cita
+   */
+  const alternarActiva = async (id: string) => {
+    if (!firebaseAuth.currentUser) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    setSaving(true);
+
+    try {
+      const cita = citas.find(c => c.id === id);
+      const nuevoValor = !cita?.activa;
+
+      const citaRef = doc(firebaseDb, 'citas', id);
+      await updateDoc(citaRef, { activa: nuevoValor });
+
+      setCitas(prev => prev.map(c => c.id === id ? { ...c, activa: nuevoValor } : c));
+    } catch (error) {
+      console.error('Error al alternar estado activa:', error);
       throw error;
     } finally {
       setSaving(false);
@@ -426,6 +459,7 @@ export function useCitas() {
     obtenerCitaPorId,
     cambiarEstadoCita,
     marcarPagado,
+    alternarActiva,
     
     // Métodos de filtrado
     filtrarCitasPorFecha,

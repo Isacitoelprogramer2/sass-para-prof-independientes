@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Calendar,
   CurrencyDollar,
@@ -20,8 +21,65 @@ export default function NotificationsPanel({
 }: NotificationsPanelProps) {
   const { notificaciones, loading, marcarComoLeida } = useNotificaciones();
 
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Detectar si es móvil para ajustar intervalo
+  const isMobile = typeof window !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent);
+  const intervalMs = isMobile ? 5000 : 1000; // 5s en móvil, 1s en desktop
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsVisible(!document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return; // Pausar si no está visible
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, intervalMs);
+    return () => clearInterval(interval);
+  }, [isVisible, intervalMs]);
+
   const handleNotificationClick = async (notifId: string) => {
     await marcarComoLeida(notifId);
+  };
+
+  // Función para calcular tiempo transcurrido
+  const calcularTiempoTranscurrido = (createdAt: Date) => {
+    try {
+      const ahora = currentTime;
+      const diffMs = ahora - createdAt.getTime();
+
+      const diffMinutos = Math.floor(diffMs / (1000 * 60));
+      const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffSemanas = Math.floor(diffDias / 7);
+      const diffMeses = Math.floor(diffDias / 30);
+      const diffAnios = Math.floor(diffDias / 365);
+
+      if (diffAnios > 0) {
+        return `hace ${diffAnios} ${diffAnios === 1 ? 'año' : 'años'}`;
+      } else if (diffMeses > 0) {
+        return `hace ${diffMeses} ${diffMeses === 1 ? 'mes' : 'meses'}`;
+      } else if (diffSemanas > 0) {
+        return `hace ${diffSemanas} ${diffSemanas === 1 ? 'semana' : 'semanas'}`;
+      } else if (diffDias > 0) {
+        return `hace ${diffDias} ${diffDias === 1 ? 'día' : 'días'}`;
+      } else if (diffHoras > 0) {
+        return `hace ${diffHoras} ${diffHoras === 1 ? 'hora' : 'horas'}`;
+      } else if (diffMinutos > 0) {
+        return `hace ${diffMinutos} ${diffMinutos === 1 ? 'minuto' : 'minutos'}`;
+      } else {
+        return "hace menos de 1 min";
+      }
+    } catch (error) {
+      console.error("Error calculando tiempo para notificación:", error);
+      return "Error calculando tiempo";
+    }
   };
 
   if (!showNotifications) return null;
@@ -37,7 +95,7 @@ export default function NotificationsPanel({
           <X className="h-4 w-4 text-tertiary" />
         </button>
       </div>
-      <div className="max-h-96 overflow-y-auto">
+      <div className="max-h-96 overflow-y-auto rounded-lg">
         {loading ? (
           <div className="p-4 text-center text-tertiary">
             Cargando notificaciones...
@@ -68,7 +126,7 @@ export default function NotificationsPanel({
                 <div className="flex-1">
                   <p className="text-sm font-medium text-primary">{notif.title}</p>
                   <p className="text-sm text-tertiary mt-1">{notif.message}</p>
-                  <p className="text-xs text-quaternary mt-2">{notif.time}</p>
+                  <p className="text-xs text-quaternary mt-2">{calcularTiempoTranscurrido(notif.createdAt)}</p>
                 </div>
               </div>
             </div>
