@@ -73,6 +73,9 @@ export default function ServiciosPage() {
       citasFiltradas = citasFiltradas.filter(cita => cita.estado === filtroEstado);
     }
 
+    // Ordenar por fecha más reciente primero
+    citasFiltradas.sort((a, b) => new Date(b.fechaReservada).getTime() - new Date(a.fechaReservada).getTime());
+
     return citasFiltradas;
   };
 

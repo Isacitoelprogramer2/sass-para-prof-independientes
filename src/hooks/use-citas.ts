@@ -421,7 +421,7 @@ export function useCitas() {
     const inicioDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
     const finDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59);
     
-    return filtrarCitasPorFecha(inicioDelDia, finDelDia);
+    return filtrarCitasPorFecha(inicioDelDia, finDelDia).sort((a, b) => b.fechaReservada.getTime() - a.fechaReservada.getTime());
   };
 
   /**
@@ -429,10 +429,10 @@ export function useCitas() {
    */
   const obtenerCitasEstaSemana = () => {
     const hoy = new Date();
-    const inicioSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay()));
-    const finSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay() + 6));
+    const inicioSemana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - hoy.getDay());
+    const finSemana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - hoy.getDay() + 6, 23, 59, 59);
     
-    return filtrarCitasPorFecha(inicioSemana, finSemana);
+    return filtrarCitasPorFecha(inicioSemana, finSemana).sort((a, b) => b.fechaReservada.getTime() - a.fechaReservada.getTime());
   };
 
   /**
@@ -441,9 +441,9 @@ export function useCitas() {
   const obtenerCitasEsteMes = () => {
     const hoy = new Date();
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59);
     
-    return filtrarCitasPorFecha(inicioMes, finMes);
+    return filtrarCitasPorFecha(inicioMes, finMes).sort((a, b) => b.fechaReservada.getTime() - a.fechaReservada.getTime());
   };
 
   return {
