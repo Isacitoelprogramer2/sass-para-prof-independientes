@@ -18,5 +18,6 @@ export interface Cita {
   precioFinal?: number; // el precio que se cobrará (estándar o personalizado)
   precioPersonalizado?: number; // sólo si precioTipo === 'PERSONALIZADO'
   activa: boolean; // indica si la cita está activa o ya cesó
+  comentariosCliente?: string; // comentarios adicionales del cliente
 }
 

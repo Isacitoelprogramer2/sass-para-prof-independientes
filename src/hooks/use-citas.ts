@@ -62,6 +62,7 @@ export function useCitas() {
               precioTipo: data.precioTipo ?? undefined,
               precioFinal: typeof data.precioFinal === 'number' ? data.precioFinal : (data.precioFinal ? Number(data.precioFinal) : undefined),
               precioPersonalizado: typeof data.precioPersonalizado === 'number' ? data.precioPersonalizado : (data.precioPersonalizado ? Number(data.precioPersonalizado) : undefined),
+              comentariosCliente: data.comentariosCliente || undefined,
           } as Cita;
         });
 
@@ -132,6 +133,7 @@ export function useCitas() {
         precioTipo: (citaData as any).precioTipo,
         precioFinal: (citaData as any).precioFinal,
         precioPersonalizado: (citaData as any).precioPersonalizado,
+        comentariosCliente: citaData.comentariosCliente,
       };
 
       // Firestore no acepta valores 'undefined' en los documentos — eliminarlos antes de enviar
@@ -158,6 +160,7 @@ export function useCitas() {
         precioTipo: (citaData as any).precioTipo,
         precioFinal: (citaData as any).precioFinal,
         precioPersonalizado: (citaData as any).precioPersonalizado,
+        comentariosCliente: citaData.comentariosCliente,
       };
 
       setCitas(prev => [...prev, citaCreada].sort((a, b) => 
