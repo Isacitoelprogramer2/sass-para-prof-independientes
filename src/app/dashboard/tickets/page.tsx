@@ -8,7 +8,7 @@ import { TicketDetailModal } from "@/components/application/modals/ticket-detail
 import { TicketFormModal } from "@/components/application/modals/ticket-form-modal";
 import { ConfirmDeleteModal } from "@/components/application/modals/confirm-delete-modal";
 import { Button } from "@/components/base/buttons/button";
-import { Search,Filter, Calendar, AlertTriangle, AlertCircle, Minus } from "lucide-react";
+import { Search,Filter, Calendar, AlertTriangle, AlertCircle, Minus, CheckCircle, Clock, XCircle } from "lucide-react";
 import { Plus } from "@untitledui/icons";
 import { Select } from "@/components/base/select/select";
 
@@ -121,6 +121,32 @@ export default function TicketsPage() {
         return 'bg-warning-50 text-warning-700 border-warning-200';
       case 'BAJA':
         return 'bg-success-50 text-success-700 border-success-200';
+      default:
+        return 'bg-secondary text-tertiary border-secondary';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'ABIERTO':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'EN_PROGRESO':
+        return <Clock className="h-4 w-4" />;
+      case 'CERRADO':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ABIERTO':
+        return 'bg-success-50 text-success-700 border-success-200';
+      case 'EN_PROGRESO':
+        return 'bg-warning-50 text-warning-700 border-warning-200';
+      case 'CERRADO':
+        return 'bg-secondary-50 text-secondary-700 border-secondary-200';
       default:
         return 'bg-secondary text-tertiary border-secondary';
     }
@@ -294,6 +320,10 @@ export default function TicketsPage() {
                         <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${getPriorityColor(t.prioridad)}`}>
                           {getPriorityIcon(t.prioridad)}
                           {t.prioridad}
+                        </div>
+                        <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(t.estado)}`}>
+                          {getStatusIcon(t.estado)}
+                          {t.estado === 'ABIERTO' ? 'Abierto' : t.estado === 'EN_PROGRESO' ? 'En Progreso' : 'Cerrado'}
                         </div>
                       </div>
                       
